@@ -1,0 +1,11 @@
+#!/bin/bash
+
+id=$1
+temp=$2
+hum=$3
+seq=$4
+lowbatt=$5
+rssi=$6
+url="http://<yourwebserver>/pushvals.cgi?item=$id&temp=$temp&humidity=$hum&lowbatt=$lowbatt"
+curl $url
+
