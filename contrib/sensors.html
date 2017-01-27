@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
+<HTML>
+<HEAD>
+<meta charset="utf-8"/>
+<link rel='icon' type='image/x-icon' href='/favicon.ico' />
+<link rel='shortcut icon' href='/favicon.ico' />
+<script src="https://code.jquery.com/jquery-1.11.3.js"></script>
+<script src="https://code.highcharts.com/stock/highstock.js"></script>
+<script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+<title>TFA-Sensor-Portal</title>
+</HEAD>
+<BODY>
+<div id="charts"></div>
+
+<script type="text/javascript">
+
+var baseUrl='sensors.cgi';
+    
+var charts=[
+        {
+            type: 	'tfa-temp',
+            ids: 	['2c03','33e7','3067'],
+            container: 	'auto',
+            title: 	'Temperatur Keller'
+        },
+        {
+            type: 	'tfa-temp',
+            ids: 	['66ea','6583','5d01','3414','66f4'],
+            container: 	'auto',
+            title: 	'Temperatur G1'
+        },
+        {
+            type: 	'tfa-temp',
+            ids: 	['3e18','615b','6691','3965','6253'],
+            container: 	'auto',
+            title: 	'Temperatur G2'
+        },
+        {
+            type: 	'tfa-temp',
+            ids: 	['2aa5','4946'],
+            container: 	'auto',
+            title: 	'Temperatur Aussen'
+        },
+        {
+            type: 	'tfa-humidity',
+            ids: 	['2c03','33e7','3067'],
+            container: 	'auto',
+            title: 	'Feuchtigkeit Keller'
+        },
+        {
+            type: 	'tfa-humidity',
+            ids: 	['66ea','6583','5d01','3414','66f4'],
+            container: 	'auto',
+            title: 	'Feuchtigkeit G1'
+        },
+        {
+            type: 	'tfa-humidity',
+            ids: 	['3e18','615b','6691','3965'],
+            container: 	'auto',
+            title: 	'Feuchtigkeit G2'
+        },
+        {
+            type: 	'tfa-humidity',
+            ids: 	['2aa5','4946'],
+            container: 	'auto',
+            title: 	'Feuchtigkeit Aussen'
+        }
+        ];        
+
+var sensortab={
+    '2aa5':'Aussen',
+    '2c03':'Waschküche',
+    '33e7':'Gang unten',
+    '3067':'Küche',
+    '3414':'Gang 1',
+    '3965':'Gang 2',
+    '3e18':'Wohnzimmer oben',
+    '4946':'Öltank',
+
+    '615b':'Schlafzimmer Nord',
+    '6691':'Schlafzimmer Süd', 
+    '66ea':'Wohnzimmer unten',
+    '6583':'Waschbeckenzimmer',
+    '66f4':'WC unten',
+    '5d01':'Bibliothek',
+    '6253':'WC oben',
+    '65b0':'NC'
+    };
+
+//var colors=['#0000ff','#00ff00','#ff0000','#00ffff','#ffff00','#ff00ff','#800080','#008080','#808080'];
+
+
+function sleep (time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+function fixtime (series) {
+    for (var i = 0; i < series.length; i++) {
+        series[i][0]*=1000;
+    } 
+}
+
+Highcharts.setOptions({
+                global : {
+                    useUTC : false
+                }
+});
+            
+$(function () {
+    
+    function createChartSub(container,data,title) {
+    // Create the chart
+        $(container).highcharts('StockChart', {
+       legend: {
+            enabled: true,
+            align: 'bottom',
+            backgroundColor: '#F0F0F0',
+            borderColor: 'black',
+            borderWidth: 1,
+            layout: 'vertical',
+            verticalAlign: 'top',
+            y: 100,
+            shadow: true
+        },
+            rangeSelector : {
+                allButtonsEnabled: true,
+                buttons: [{
+                    type: 'hour',
+                    count: 3,
+                    text: '3h',
+                }, {
+                    type: 'hour',
+                    count: 12,
+                    text: '12h',
+                }, {
+                    type: 'day',
+                    count: 1,
+                    text: 'Day',
+                }, {
+                    type: 'day',
+                    count: 2,
+                    text: '2 Days',
+                }, {
+                    type: 'day',
+                    count: 3,
+                    text: '3 Days',
+                }, {
+                    type: 'all',
+                    text: 'Month',
+                }, {
+                    type: 'all',
+                    text: 'All',
+                }],
+                buttonTheme: {
+                    width: 60
+                },
+                selected : 2
+            },
+
+            title : {
+                text : title
+            },
+                        
+            series : data
+        });
+    }
+    
+    function createChart(baseUrl,description,num) {
+        var container=description.container;
+        var title=description.title;
+        var ids=description.ids;
+        var idx=0;
+
+        var seriesOptions=[];
+        var getUrl=baseUrl;
+        getUrl+='?type='+description.type+'&item=';
+                
+        var suffix='°C';
+        if (description.type=='tfa-humidity')
+            suffix='%';
+
+        if (container=='auto') {
+                container='auto_chart_container'+num;
+                $('#charts').append('<div id="'+container+'" style="height: 500px; min-width: 310px"></div>');
+                container='#'+container;
+        }
+            
+        function getData(ar,idx) {
+            var sid=ar[idx];
+            $.getJSON(getUrl+sid,
+                 function (data) {
+                     fixtime(data);
+                     seriesOptions[idx] = {
+                        name: sensortab[sid],
+                        data: data,
+                        tooltip: {
+                            valueDecimals: 1,
+                            valueSuffix: suffix
+                        },
+//                        color: colors[idx]
+                    };    
+                    idx++;
+                    if (idx<ar.length)
+                        getData(ar,idx);
+                    else {      
+                        createChartSub(container,seriesOptions,title);
+                    }
+            });
+        };
+        getData(ids,idx);
+    }
+    
+    function createCharts(baseUrl,descriptions) {        
+        for(var idx=0;idx<descriptions.length;idx++) {
+            createChart(baseUrl,descriptions[idx],idx);
+        }
+    }
+    
+    createCharts(baseUrl,charts);    
+
+});
+</script>
+</BODY>
+</HTML>
