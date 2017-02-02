@@ -38,11 +38,11 @@ The resulting executable is "tfrec".
 ## Overview and internals
 
 KlimaLogg Pro consists of a standalone base station (30.3039), up to 8
-wireless sensors (30.3180.IT) and a USB-stick to download the base station
+wireless sensors (30.3180.IT or 30.3181.IT) and a USB-stick to download the base station
 data to a PC. It is very likely that the HW is also available under the
 original label LaCrosse, like some other TFA sensors.
 
-But unlike other TFA sensors, the 30.3180.IT uses a protocol that cannot be
+But unlike other TFA sensors, the 30.3180.IT or 30.3181.IT uses a protocol that cannot be
 received by the popular JeeLink USB Stick with a RFM69 module, as it does
 NRZS coding.  RFM69 is only able to decode NRZ.  Since initial byte
 synchronisation also depends on the proper coding, this difference cannot be
@@ -53,6 +53,8 @@ sensitivity, filters appropriately, performs FSK demodulation and
 NRZS-decoding.  The resulting telegrams (see fm_demod.c for more technical
 details) contain a 15bit sensor ID, temperature (-40...+60degC), humidity
 (0...100%), a low battery indicator and a CRC to detect transmission errors.
+
+The 30.3181.IT does not provide a humidity sensor and tfrec reports 0% instead. 
 
 The sensor ID is fixed and cannot be changed. It is printed on the backside
 of the sensor and is also shown when inserting the battery (the last two

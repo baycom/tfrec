@@ -113,10 +113,15 @@ void tfa_decoder::flush(int rssi)
 			// Sensor values may fail at 0xaaa/0xfff or 0x6a/0x7f due to low battery
 			// even without lowbat bit
 			// Set it to 2 -> sensor data not valid
-			if ( hum==0x6a || hum==0x7f) {
+			if (hum==0x7f) {
 				batfail=2;
 				hum=0;
 				temp=0;
+			}
+
+			// If the sensor does not provide humidity values like the 30.3181.IT it sends 0x6a (106%) instead
+			if (hum==0x6a) {
+				hum=0;
 			}
 			
 			if (dbg>=0){
