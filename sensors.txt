@@ -1,0 +1,49 @@
+## tfrec - A SDR tool for receiving wireless sensor data
+(c) 2017 Georg Acher & Deti Fliegl, {acher|fliegl}(at)baycom.de
+
+tfrec-supported sensors overview 
+*) educated guess, not tested/verified. Please let me know if other sensors also work!
+
+            Type Temp1 Temp2 Humid    ID          LCD Baudrate  Mod      Sync   Period Init-Msg   Notes
+30.3180.IT  TFA_1  X     -     X    Unique 15bit   X   38400    FM-NRZS  2d d4  10s    b26-00-56
+30.3181.IT  TFA_1  X     -     -    Unique 15bit   X   38400    FM-NRZS  2d d4  10s    b26-00-56  External sensor
+30.3199.IT* TFA_1  X     -     -    Unique 15bit   X   38400    FM-NRZS  2d d4  10s    ?          Pool sensor
+30.3143.IT  TFA_2  X     X     -    Random 6bit    X   17240    FM-NRZ   2d d4  4s     301        External sensor
+30.3146.IT* TFA_2  X     -     -    Random 6bit    X   17240    FM-NRZ   2d d4  4s     ?
+30.3144.IT  TFA_2  X     -     X    Random 6bit    X   17240    FM-NRZ   2d d4  4s     302
+30.3155.IT  TFA_3  X     -     X    Random 6bit    X    9600    FM-NRZ   2d d4  4s     p32
+
+
+Temp2: External temperature sensor (NTC 10k @ 25 degC)
+
+-----------------------------------------------------------------------------
+
+Sensor vs. station zoo (according to TFA website chaos, not verified)
+
+Stations for TFA1-sensors ("KlimaLogg Pro")
+	30.3039.IT
+	30.3053.IT
+
+Stations for TFA2-sensors (type 1)
+	30.3009.IT 
+	30.3018.IT 
+	30.3032.IT 
+	35.1026.IT 
+	35.1044.IT 
+	35.1048.IT 
+	35.1064.IT 
+	35.1068.IT 
+	35.1070.IT 
+	35.1076.IT
+
+Stations for TFA2-sensors (type 2?)
+	30.3013.IT 
+	35.1036.IT 
+	35.1045.IT 
+	35.1070.IT 
+	35.1078.IT
+
+Stations for TFA3-sensors
+	35.5000.IT
+	35.5001.IT
+	35.5017
