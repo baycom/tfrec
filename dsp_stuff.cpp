@@ -24,6 +24,31 @@
 #include "dsp_stuff.h"
 
 //-------------------------------------------------------------------------
+// 2nd order butterworth lowpass
+iir2::iir2(double cutoff)
+{
+	double i=1.0/tan(M_PI*cutoff);
+	double s=sqrt(2);
+	b0=1/(1+s*i+i*i);
+	b1=2*b0;
+	b2=b0;
+	a1=2*(i*i-1)*b0;
+	a2=-(1-s*i+i*i)*b0;
+	yn=yn1=yn2=0;
+	dn1=dn2=0;
+	//printf("%f %f %f %f %f\n",a1,a2,b0,b1,b2);
+}
+//-------------------------------------------------------------------------
+double iir2::step(double dn)
+{
+	yn2=yn1;
+	yn1=yn;
+	yn=b0*dn + b1*dn1 + b2*dn2 + a1*yn1 + a2*yn2;
+	dn2=dn1;
+	dn1=dn;
+	return yn;
+}
+//-------------------------------------------------------------------------
 // In-place decimator
 #define DEC_TAP_NUM1 20
 #define DEC_TAP_NUM2 8
@@ -188,10 +213,10 @@ int downconvert::process_iq(int16_t *data_iq, int len, int filter_type)
 	return len;
 }
 //-------------------------------------------------------------------------
-// Vastly reduced mixed demodulator for FM:
+// Vastly reduced mixed demodulator for FM-NRZS:
 // It doesn't need to be linear, nor do we care about frequency shift direction
 //-------------------------------------------------------------------------
-int fm_dev(int ar, int aj, int br, int bj)
+int fm_dev_nrzs(int ar, int aj, int br, int bj)
 {
 	int cr=ar*br+aj*bj;
 
@@ -202,4 +227,18 @@ int fm_dev(int ar, int aj, int br, int bj)
 		cr=-1e9;
 	return cr;
 }
+//-------------------------------------------------------------------------
+// Real FM demodulation
+//-------------------------------------------------------------------------
+#if 1
+int fm_dev(int ar, int aj, int br, int bj)
+{
+        double cr, cj;
+        double angle;
+        cr =((double) ar)*br + ((double)aj)*bj;
+        cj = ((double)aj)*br - ((double)ar)*bj;
+        angle = atan2(cj,cr);   
+        return (int)(angle / M_PI * (1<<14));
+}
+#endif
 //-------------------------------------------------------------------------

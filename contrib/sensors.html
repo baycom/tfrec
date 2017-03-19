@@ -143,10 +143,11 @@ $(function () {
                     text: '2 Days',
                 }, {
                     type: 'day',
-                    count: 3,
-                    text: '3 Days',
+                    count: 7,
+                    text: 'Week',
                 }, {
-                    type: 'all',
+                    type: 'month',
+                    count: 1,
                     text: 'Month',
                 }, {
                     type: 'all',
@@ -155,7 +156,7 @@ $(function () {
                 buttonTheme: {
                     width: 60
                 },
-                selected : 2
+                selected : 3
             },
 
             title : {
@@ -188,6 +189,7 @@ $(function () {
             
         function getData(ar,idx) {
             var sid=ar[idx];
+            $(container).append('Loading '+(idx+1)+'/'+ar.length+' (ID '+sid+')<br>');
             $.getJSON(getUrl+sid,
                  function (data) {
                      fixtime(data);

@@ -2,7 +2,7 @@ PACKAGES= librtlsdr
 
 CXX=g++
 
-PROFILING=
+PROFILING= #-g
 DEFINES=
 PKG_INCLUDES= $(shell pkg-config --cflags $(PACKAGES))
 PKG_LIBS= $(shell pkg-config --libs $(PACKAGES))
@@ -17,7 +17,8 @@ INCLUDES= $(PKG_INCLUDES)
 LIBS=-lm $(PKG_LIBS) -lpthread
 LDFLAGS=$(PROFILING) -rdynamic
 
-CFILES=main.cpp engine.cpp  dsp_stuff.cpp fm_demod.cpp utils.cpp sdr.cpp
+CFILES=main.cpp engine.cpp  dsp_stuff.cpp fm_demod.cpp decoder.cpp crc8.cpp \
+	tfa1.cpp tfa2.cpp utils.cpp sdr.cpp
 
 OBJS = $(CFILES:.cpp=.o)
 

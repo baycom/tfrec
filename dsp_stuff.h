@@ -15,6 +15,17 @@ using std::thread;
 using std::string;
 using std::vector;
 
+class iir2 {
+  public:
+	iir2(double cutoff);
+	double step(double din);
+	
+  private:
+  	double dn1,dn2;
+  	double yn,yn1,yn2;
+  	double b0,b1,b2,a1,a2;		
+};
+
 class decimate {
   public:
 	decimate(void);
@@ -39,6 +50,7 @@ class downconvert {
 	int passes;
 };
 
+int fm_dev_nrzs(int ar, int aj, int br, int bj);
 int fm_dev(int ar, int aj, int br, int bj);
 
 

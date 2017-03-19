@@ -9,50 +9,21 @@
 #define _INCLUDE_FM_DEMOD_H
 
 #include <string>
+#include <vector>
 
-using std::string;
+using std::vector;
 
-class crc8 {
- public:
-	crc8(int poly);
-	uint8_t calc(uint8_t *data, int len);
- private:
-	uint8_t lookup[256];		
-};
-
-class tfa_decoder
-{
- public:
-	tfa_decoder(char *_handler, int dbg);
-
-	void store_bit(int bit);
-	void flush(int rssi);
-	
- private:
-	int dbg;
-	char *handler;
-	uint32_t sr;
-	int sr_cnt;
-	int byte_cnt;
-	uint8_t rdata[32];
-	int snum;	
-	int bad;
-	crc8 *crc;
-};
+#include "decoder.h"
 
 class fsk_demod {
   public:
-	fsk_demod(int _thresh, tfa_decoder *_dec, int _dbg);
+	fsk_demod(vector<demodulator*> *_demods, int _thresh, int _dbg);
 	void process(int16_t *data_iq, int len);
 	
  private:
-	tfa_decoder *dec;
 	int thresh;
 	int16_t last_i, last_q;
-	int last_bit_idx;
-	int timeout_cnt;
-	int mark_lvl;
-	int rssi;
 	int dbg;
+	vector<demodulator*> *demods;
 };
 #endif
