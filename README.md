@@ -139,14 +139,14 @@ echo-command.
 
 Other useful options:
 
--g <gain>: Manual (for 820T-tuner 0...50, -1: auto gain=default)
--d <index or name>: Use specified stick (use -d ? to list all sticks)
--w <timeout>: Run for timeout seconds and exit
--m <mode>: If 1, store data and only execute one handler for each ID at exit (use with -w)
--T <type>: Enable individual sensor types, bitmask ORing the following choices:
-		1: TFA_1 (KlimaLoggPro)
-		2: TFA_2 (17240bit/s)
-		4: TFA_3 (9600bit/s)
+- -g <gain>: Manual (for 820T-tuner 0...50, -1: auto gain=default)
+- -d <index or name>: Use specified stick (use -d ? to list all sticks)
+- -w <timeout>: Run for timeout seconds and exit
+- -m <mode>: If 1, store data and only execute one handler for each ID at exit (use with -w)
+- -T <type>: Enable individual sensor types, bitmask ORing the following choices:
+  -		1: TFA_1 (KlimaLoggPro) 
+  -		2: TFA_2 (17240bit/s)
+  -		4: TFA_3 (9600bit/s)
 
 ## Support for non-KlimaLoggPro TFA/LaCrosse sensors:
 
@@ -159,10 +159,10 @@ the following scheme:
 
  a000bccd
 
-a = 1 (17240baud types), 2 (9600 baud types)
-b = static 9 (probably other values for other sensors)
-cc = random ID
-d = 0 (internal temperature sensor), 1 (external temperature sensor for 3143)
+- a = 1 (17240baud types), 2 (9600 baud types)
+- b = static 9 (probably other values for other sensors)
+- cc = random ID
+- d = 0 (internal temperature sensor), 1 (external temperature sensor for 3143)
 
 The output format for the handler is identical to the other sensors. The
 sequence counter is set to 0. If the sensor does not support humidity, it is
@@ -233,9 +233,9 @@ MySQL database and draws charts via Javascript.
 Short setup:
 
 - Create a database 'smarthome' with a user 'smarthome' and some password
-   mysql> create database smarthome;
-   mysql> create user 'smarthome'@'localhost' identified by 'some password';
-   mysql> grant all privileges on smarthome.* to 'smarthome'@'localhost';
+  -   mysql> create database smarthome;  
+  -   mysql> create user 'smarthome'@'localhost' identified by 'some password';
+  -   mysql> grant all privileges on smarthome.* to 'smarthome'@'localhost';
 
 - Create table with 'mysql -u smarthome -p -A smarthome < sensors.sql'
 
