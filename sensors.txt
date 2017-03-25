@@ -3,22 +3,28 @@
 
 tfrec-supported sensors overview 
 *) educated guess, not tested/verified. Please let me know if other sensors also work!
+#) Success reported by users
 
             Type Temp1 Temp2 Humid    ID          LCD Baudrate  Mod      Sync   Period Init-Msg   Notes
 30.3180.IT  TFA_1  X     -     X    Unique 15bit   X   38400    FM-NRZS  2d d4  10s    b26-00-56
 30.3181.IT  TFA_1  X     -     -    Unique 15bit   X   38400    FM-NRZS  2d d4  10s    b26-00-56  External sensor
 30.3199.IT* TFA_1  X     -     -    Unique 15bit   X   38400    FM-NRZS  2d d4  10s    ?          Pool sensor
+
 30.3143.IT  TFA_2  X     X     -    Random 6bit    X   17240    FM-NRZ   2d d4  4s     301        External sensor
-30.3146.IT* TFA_2  X     -     -    Random 6bit    X   17240    FM-NRZ   2d d4  4s     ?
 30.3144.IT  TFA_2  X     -     X    Random 6bit    X   17240    FM-NRZ   2d d4  4s     302
-30.3155.IT  TFA_3  X     -     X    Random 6bit    X    9600    FM-NRZ   2d d4  4s     p32
+30.3146.IT* TFA_2  X     -     -    Random 6bit    -   17240    FM-NRZ   2d d4  4s     ?
+30.3147.IT# TFA_2  X     -     -    Random 6bit    -   17240    FM-NRZ   2d d4  4s     ?
+30.3159.IT# TFA_2  X     -     -    Random 6bit    -   17240    FM-NRZ   2d d4  4s     ?
+
+30.3155.WD  TFA_3  X     -     X    Random 6bit    X    9600    FM-NRZ   2d d4  4s     p32
+30.3156.WD# TFA_3  X     -     -    Random 6bit    -    9600    FM-NRZ   2d d4  4s     ?
 
 
 Temp2: External temperature sensor (NTC 10k @ 25 degC)
 
 -----------------------------------------------------------------------------
 
-Sensor vs. station zoo (according to TFA website chaos, not verified)
+Sensor vs. station zoo (according to TFA website chaos + own googling, not verified)
 
 Stations for TFA1-sensors ("KlimaLogg Pro")
 	30.3039.IT
@@ -35,6 +41,7 @@ Stations for TFA2-sensors (type 1)
 	35.1068.IT 
 	35.1070.IT 
 	35.1076.IT
+	35.1089.IT
 
 Stations for TFA2-sensors (type 2?)
 	30.3013.IT 
@@ -42,8 +49,42 @@ Stations for TFA2-sensors (type 2?)
 	35.1045.IT 
 	35.1070.IT 
 	35.1078.IT
+	35.1115 "Square" (sensors 30.3188, 30.3187, 30.3159)
+	35.1117 "Quantia" (sensors 30.3188, 30.3187, 30.3159)
+	35.1121 "Square+" (sensors 30.3188, 30.3187, 30.3159)
 
-Stations for TFA3-sensors
+Stations for TFA3-sensors (Weather direct)
 	35.5000.IT
 	35.5001.IT
-	35.5017
+	35.5002.IT
+	35.5003.IT
+	35.5010.IT
+	35.5011.IT
+	35.5012.IT
+	35.5014.IT
+	35.5015.IT
+	35.5016.IT
+	35.5017.IT
+	35.5018.IT
+	35.5019.IT
+	35.5020.IT
+	35.5022.IT
+	35.5024.IT
+	35.5025.IT
+	35.5027.IT
+	35.5028.IT
+	35.5030.IT
+	35.5031.IT
+	35.5034.IT
+	35.5035.IT
+	35.5036.IT
+	35.5037.IT
+	35.5038.IT
+	35.5039.IT
+	35.5040.IT
+	35.5041.IT
+	35.5042.IT
+	35.5045.IT
+	35.5049.IT
+	35.5051.IT
+

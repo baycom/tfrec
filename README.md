@@ -15,13 +15,13 @@ Received values must be externaly fed to a database, FHEM, etc!
 Supported sensors are (see sensors.txt for more details):
 
 - NRZS/38400baud: 30.3180.IT, 30.3181.IT and probably 30.3199 (pool sensor)
-- NRZ/9600baud:   30.3155
-- NRZ/17240baud:  30.3143, 30.3144 and probably 30.3146, 30.3147
+- NRZ/9600baud:   30.3155.WD, 30.3156.WD
+- NRZ/17240baud:  30.3143.IT, 30.3144.IT, 30.3147.IT, 30.3157 and probably 30.3146.IT
 
 It is likely that the other LaCrosse-based sensors with 9600/17240baud also
 work:
 
- TX21IT, TX25IT, TX27IT, TX29IT, TX35, TX37
+ TX21IT, TX25IT, TX27IT, TX29IT, TX35, TX37 (label Technoline)
 
 Please let me know if you have any success :)
 
