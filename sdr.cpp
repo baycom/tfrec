@@ -5,7 +5,7 @@
         #include <GPL-v2>
 
   sdr.cpp -- wrapper around librtlsdr
- 
+
   Parts taken from librtlsdr (rtl_fm.c)
   rtl-sdr, turns your Realtek RTL2832 based DVB dongle into a SDR receiver
   Copyright (C) 2012 by Steve Markgraf <steve@steve-m.de>
@@ -32,7 +32,7 @@ sdr::sdr(int dev_index, int _dbg, int dumpmode, char *dumpfile)
 	running=0;
 	dev=NULL;
 	dump_fd=NULL;
-	
+
 	if (dumpmode>0 && dumpfile) {
 		dump_fd=fopen(dumpfile,"wb");
 		if (!dump_fd) {
@@ -55,13 +55,13 @@ sdr::sdr(int dev_index, int _dbg, int dumpmode, char *dumpfile)
 	int r;
 	while(1) {
 		r=rtlsdr_open(&dev, dev_index);
-		if (!r) 
+		if (!r)
 			break;
 		fprintf(stderr, "RET OPEN %i, retry\n",r);
 		sleep(1);
 	}
 	set_ppm(0);
-//	set_gain(0,0);	
+//	set_gain(0,0);
 	pthread_cond_init(&ready, NULL);
 	pthread_mutex_init(&ready_m, NULL);
 }
@@ -98,7 +98,7 @@ int sdr::search_device(char *substr)
 	return -1;
 }
 //-------------------------------------------------------------------------
-int sdr::start(void) 
+int sdr::start(void)
 {
 	if (!dev)
 		return -1;
