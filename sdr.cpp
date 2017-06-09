@@ -184,14 +184,14 @@ int sdr::set_gain(int mode,float g)
 		return -1;
 	int r;
 	if (mode==0) {
-		if (dbg)
+		if (dbg>0)
 			printf("AUTO GAIN\n");
 
 		r=rtlsdr_set_tuner_gain_mode(dev,0);
 		cur_gain=0;
 	} else {
 		cur_gain=nearest_gain(g*10);
-		if (dbg)
+		if (dbg>0)
 			printf("GAIN %.1f\n",cur_gain/10.0);
 		r=rtlsdr_set_tuner_gain_mode(dev, 1);
 		r=rtlsdr_set_tuner_gain(dev, cur_gain);
@@ -215,7 +215,7 @@ int sdr::set_samplerate(int s)
 		return -1;
 	int r;
         r=rtlsdr_set_sample_rate(dev, s);
-	if (dbg)
+	if (dbg>0)
 		printf("Samplerate %i\n",s);
 	cur_sr=s;
 	return r;
@@ -250,7 +250,7 @@ static void sdr_read_callback(unsigned char *buf, uint32_t len, void *ctx)
 //-------------------------------------------------------------------------
 void sdr::read_thread(void)
 {
-	if (dbg)
+	if (dbg>0)
 		printf("START READ THREAD\n");
 	rtlsdr_read_async(dev, sdr_read_callback, this, 0, buffer_len/8);
 }

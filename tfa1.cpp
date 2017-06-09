@@ -47,7 +47,7 @@ tfa1_decoder::tfa1_decoder(void)
 void tfa1_decoder::flush(int rssi, int offset)
 {
 	if (byte_cnt>=10) {
-		if (dbg) {
+		if (dbg>0) {
 			printf("#%03i %u  ",snum++,(uint32_t)time(0));
 			for(int n=0;n<11;n++)
 				printf("%02x ",rdata[n]);
@@ -103,7 +103,7 @@ void tfa1_decoder::flush(int rssi, int offset)
 		}
 		else {
 			bad++;
-			if (dbg) {
+			if (dbg>0) {
 				if (crc_val!=crc_calc)
 					printf("BAD %i RSSI %i (CRC %02x %02x)\n",bad,rssi,crc_val,crc_calc);
 				else
