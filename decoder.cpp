@@ -53,7 +53,7 @@ void decoder::execute_handler(sensordata_t &d)
 			 d.sequence, d.alarm, d.rssi,
 			 d.flags,
 			 d.ts);
-		if (dbg==1)
+		if (dbg>=1)
 			printf("EXEC %s\n",cmd);
 		(void)system(cmd);
 	}

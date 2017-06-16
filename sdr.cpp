@@ -145,7 +145,7 @@ int sdr::set_frequency(uint32_t f)
 	int r;
 	r=rtlsdr_set_center_freq(dev, f);
 	cur_frequ=f;
-	if (dbg==1)
+	if (dbg>=1)
 		printf("Frequency %.4lfMHz\n",(float)(f/1e6));
 	return r;
 }

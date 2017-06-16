@@ -51,11 +51,11 @@ void fsk_demod::process(int16_t *data_iq, int len)
 		last_q=data_iq[i+1];
 	}
 	
-	if (dbg==2)
+	if (dbg>=2)
 		printf("Trigger ratio %i/%i \n",triggered,len/2);
 	if (triggered >= len/8) {
 		thresh+=5;
-		if (dbg==2)
+		if (dbg>=2)
 			printf("Adjust trigger level to %i\n",thresh);
 	}
 		
