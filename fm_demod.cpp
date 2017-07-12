@@ -53,11 +53,15 @@ void fsk_demod::process(int16_t *data_iq, int len)
 	
 	if (dbg>=2)
 		printf("Trigger ratio %i/%i \n",triggered,len/2);
+
+// disable faulty trigger level detection; see https://www.mikrocontroller.net/topic/417740#5044129
+/*
 	if (triggered >= len/8) {
 		thresh+=5;
 		if (dbg>=2)
 			printf("Adjust trigger level to %i\n",thresh);
 	}
+*/
 		
 }
 //-------------------------------------------------------------------------
