@@ -3,7 +3,7 @@
 #include "tfa1.h"
 #include "dsp_stuff.h"
 
-// Protocol for IT+ Sensors 30.3180.IT, 30.3181.IT, 30.31
+// Protocol for IT+ Sensors 30.3180.IT, 30.3181.IT, 30.3199
 // "KlimaLogg Pro"
 //
 // FSK - modulation
@@ -24,7 +24,7 @@
 // TTT: Temperatur in BCD in .1degC steps, offset +40degC (-> -40...+60)
 // HH(6:0): rel. Humidity in % (binary coded, no BCD!)
 // BB(7): Low battery if =1
-// BB(6:4): 110 (fixed)
+// BB(6:4): 110 or 111 (for 3199)
 // SS(7:4): sequence number (0...f)
 // SS(3:0): 0000 (fixed)
 // 56: Type?
@@ -67,12 +67,12 @@ void tfa1_decoder::flush(int rssi, int offset)
 		     && ((rdata[4]&0xf0)==0x80 // ignore all learning messages except sensor fails
 		     	 || hum==0x7f || hum==0x6a)
 		     && hum<=0x7f              // catch sensor fail due to lowbat
-		     && (rdata[7]&0x70)==0x60
+		     && (rdata[7]&0x60)==0x60      // 0x60 or 0x70
 		     && (rdata[8]&0xf)==0
 		     && rdata[9]==0x56 // Type?
 		     ) {
 
-			// .3181 has only temperature, humidity is 0x6a
+			// .3181/.3199 has only temperature, humidity is 0x6a
 			if ( hum==0x6a)
 				hum=0;
 			

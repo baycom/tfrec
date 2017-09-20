@@ -22,6 +22,8 @@
 
 #include "sdr.h"
 
+#define READ_TIMEOUT 5
+
 //-------------------------------------------------------------------------
 sdr::sdr(int dev_index, int _dbg, int dumpmode, char *dumpfile)
 {
@@ -107,6 +109,7 @@ int sdr::start(void)
         r=rtlsdr_reset_buffer(dev);
 	running=1;
 	r_thread=new thread(&sdr::read_thread,this);
+	alarm(READ_TIMEOUT);
 	return 0;
 }
 //-------------------------------------------------------------------------
@@ -246,6 +249,7 @@ static void sdr_read_callback(unsigned char *buf, uint32_t len, void *ctx)
 
 	sdr *this_ptr=(sdr*)ctx;
 	this_ptr->read_data(buf,len);
+	alarm(READ_TIMEOUT); 
 }
 //-------------------------------------------------------------------------
 void sdr::read_thread(void)

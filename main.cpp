@@ -8,12 +8,19 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "engine.h"
 
 #include "tfa1.h"
 #include "tfa2.h"
 
+//-------------------------------------------------------------------------
+void timeout_handler(int sig)
+{
+	fprintf(stderr,"Read timeout, exiting\n");
+	exit(-1);
+}
 //-------------------------------------------------------------------------
 void usage(void)
 {
@@ -25,7 +32,7 @@ void usage(void)
 		" -f <freq>   : Set frequency in kHz (default 868250)\n"		
 		" -g <gain>   : Set gain (-1: auto/default, 0...50: manual)\n"
 		" -e <exec>   : Executable to be called for every message (try echo)\n"
-		" -t <thresh> : Set RF trigger threshold (default 150, @autogain 350)\n"
+		" -t <thresh> : Set RF trigger threshold (default 0=auto)\n"
 		" -m <mode>   : 0: exec handler for every message (default), 1: summary at program exit\n"
 		" -w <timeout>: Run for <timeout> seconds (default: 0=forever)\n"
 		" -T <types>  : Bitmask of sensor types (1: TFA_1/KlimaLogg Pro, 2: TFA_2/17240, 4: TFA_3/9600), default: all\n"
@@ -39,7 +46,7 @@ int main(int argc, char **argv)
 {
 	int gain=-1;
 	int freq=868250;
-	int thresh=350;
+	int thresh=0; // Auto
 	char *exec=NULL;
 	int debug=0; // -1: quiet, 0: normal, 1: debug
 	int timeout=0;
@@ -107,8 +114,6 @@ int main(int argc, char **argv)
 		fprintf(stderr,"Invalid SDR device\n");
 		exit(-1);
 	}
-	if (gain!=-1 && thresh==350) //
-		thresh=150;
 
 	vector<demodulator*> demods;
 
@@ -139,6 +144,7 @@ int main(int argc, char **argv)
 	fsk_demod fsk(&demods, thresh, debug);
 
 	engine e(deviceindex,freq,gain,&fsk,debug,dumpmode,dumpfile);
+	signal(SIGALRM, timeout_handler);
 	e.run(timeout);
 
 	if (mode) {

@@ -21,7 +21,9 @@ class fsk_demod {
 	void process(int16_t *data_iq, int len);
 	
  private:
-	int thresh;
+	int thresh,thresh_mode;
+	int triggered_avg;
+	int  runs;
 	int16_t last_i, last_q;
 	int dbg;
 	vector<demodulator*> *demods;
