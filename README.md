@@ -41,7 +41,7 @@ GPLv2   http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
  utility has to run without any problems. Under Linux you need to add
  udev rules to use the stick as a non-root-user.
  
-- make, C++ compiler (g++/llvm)
+- make, C++ compiler (g++/llvm), pkg-config
 
 - For the optional visualisation: apache, MySQL and Perl
 
@@ -147,6 +147,8 @@ Other useful options:
   -		1: TFA_1 (KlimaLoggPro) 
   -		2: TFA_2 (17240bit/s)
   -		4: TFA_3 (9600bit/s)
+- -t <trigger>: Manually set trigger level (usually 200-1000). If 0, the level is adjusted
+                automatically (default)
 
 ## Support for non-KlimaLoggPro TFA/LaCrosse sensors:
 
@@ -189,12 +191,12 @@ affects all sensors.
 
  If the sensors should be supported, please send me a dump (see below).
 
- Run with -DD. This prints the trigger events like 400/32768. If there is
- too much noise, the first number reaches the second. It is very unlikely
- that decoding works in this case, so an automatic adjustment decreases the
- the trigger sensitivity without altering the gain. If this doesn't work
- for you, try the manual gain option or increase the trigger level with '-t
- 1000' or even higher values.
+ Run with -DD. This prints the trigger events like 400/32768. If there
+ is too much noise, the first number reaches the second. It is very
+ unlikely that decoding works in this case, so the trigger
+ sensitivityis automatically adjusted without altering the hardware
+ gain. If this doesn't work for you, try the manual gain option or set
+ the trigger level manually with '-t 1000' or even higher values.
 
 - Missing sensor IDs
 

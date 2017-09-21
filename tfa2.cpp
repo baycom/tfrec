@@ -19,15 +19,18 @@
 // 7 bytes total (inkl. sync, excl. training)
 //
 // Telegram format
+//            3  4 5  6
 // 0x2d 0xd4 II IT TT HH CC
 // 2d d4: Sync bytes
 // III(11:8)=0x9 (at least for 3143/44/55)
 // III(7:2)= ID(7:2) (displayed at startup, last 2 bits of ID always 0)
 // III(1:0)= ? (3155=2)
+// III(1)=  New battery, set to zero after some hours
 // TTT: Temperature BCD in 1/10deg, offset +40deg
 // HH: Humidity or sensor-index (binary)
 //    HH=6a -> internal temperature sensor (3143)
 //    HH=7d -> external temperature sensor (3143)
+// HH(7) Lowbatt?
 // CC: CRC8 from I to HH (polynome x^8 + x^5 + x^4  + 1)
 
 //-------------------------------------------------------------------------
