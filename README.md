@@ -25,6 +25,11 @@ work:
 
 Please let me know if you have any success :)
 
+Sensors in development (not enabled by default):
+
+LaCrosse TX22 (Type 8)
+TFA Weatherhub (Type 20)
+
 ## License
 
 GPLv2   http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
