@@ -12,6 +12,9 @@ enum sensor_e {
 	TFA_1=0, // IT+ Klimalogg Pro, 30.3180, 30.3181, 30.3199(?)
 	TFA_2,   // IT+ 30.3143, 30.3146(?), 30.3144
 	TFA_3,   // 30.3155
+	TX22,    // LaCrosse TX22
+	TFA_WHP,   // 30.3306 (rain meter), pulse data
+	TFA_WHB,   // TFA WeatherHub
 	FIREANGEL=0x20 // ST-630+W2
 };
 
@@ -30,7 +33,7 @@ typedef struct {
 class decoder
 {
  public:
-	decoder(void);
+	decoder(sensor_e _type);
 	void set_params(char *_handler, int _mode, int _dbg);
 	virtual void store_bit(int bit);
 	virtual void flush(int rssi, int offset=0);
@@ -38,11 +41,13 @@ class decoder
 	virtual void execute_handler(sensordata_t &d);
 	virtual void flush_storage(void);
 	int count(void) {return data.size();}
-
+	sensor_e get_type(void) {return type;}
  protected:
 	int dbg;
 	int bad;	
+	sensor_e type;
  private:
+
 	char *handler;
 	int mode;
 	map<int,sensordata_t> data;

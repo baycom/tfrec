@@ -28,6 +28,7 @@ fsk_demod::fsk_demod(vector<demodulator*> *_demods, int _thresh, int _dbg)
 	last_i=last_q=0;
 	triggered_avg=0;
 	runs=0;
+	index=0;
 }
 //-------------------------------------------------------------------------
 void fsk_demod::process(int16_t *data_iq, int len)
@@ -57,7 +58,7 @@ void fsk_demod::process(int16_t *data_iq, int len)
 	}
 
 	triggered_avg=(31*triggered_avg+triggered)/32;
-
+	
 	if (dbg>=2)
 		printf("Trigger ratio %i/%i, avg %i \n",triggered,len/2,triggered_avg);
 	
@@ -71,6 +72,6 @@ void fsk_demod::process(int16_t *data_iq, int len)
 			if (dbg>=2)
 				printf("Decreased trigger level to %i\n",thresh);
 		}
-	}
+	}		
 }
 //-------------------------------------------------------------------------

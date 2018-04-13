@@ -27,5 +27,6 @@ class fsk_demod {
 	int16_t last_i, last_q;
 	int dbg;
 	vector<demodulator*> *demods;
+	uint64_t index;
 };
 #endif

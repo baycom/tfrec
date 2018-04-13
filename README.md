@@ -16,7 +16,7 @@ Supported sensors are (see sensors.txt for more details):
 
 - NRZS/38400baud: 30.3180.IT, 30.3181.IT and probably 30.3199 (pool sensor)
 - NRZ/9600baud:   30.3155.WD, 30.3156.WD
-- NRZ/17240baud:  30.3143.IT, 30.3144.IT, 30.3147.IT, 30.3157 and probably 30.3146.IT
+- NRZ/17240baud:  30.3143.IT, 30.3144.IT, 30.3147.IT, 30.3157.IT, 30.3159.IT and probably 30.3146.IT
 
 It is likely that the other LaCrosse-based sensors with 9600/17240baud also
 work:
@@ -161,10 +161,15 @@ the following scheme:
 
  a000bccd
 
-- a = 1 (17240baud types), 2 (9600 baud types)
-- b = static 9 (probably other values for other sensors)
+- a = type 1 (17240baud types), 2 (9600 baud types), 3 (TX22)
+- b = static value (0 for TX22, usually 9 for others)
 - cc = random ID
-- d = 0 (internal temperature sensor), 1 (external temperature sensor for 3143)
+- d = 0 (internal temperature sensor)
+  d = 1 (external temperature sensor for 3143)
+  d = 1 only humidity (TX22)
+  d = 2 rain counter as temperature value (TX22)
+  d = 3 speed as temperature, direction as humidity (TX22)
+  d = 4 gust speed as temperature (TX22)
 
 The output format for the handler is identical to the other sensors. The
 sequence counter is set to 0. If the sensor does not support humidity, it is

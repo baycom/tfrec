@@ -8,8 +8,9 @@
 // mode=0 -> handle individual messages
 // mode=1 -> handle summary (only one message per id)
 
-decoder::decoder(void)
+decoder::decoder(sensor_e _type)
 {
+	type=_type;
 	handler=NULL;
 	mode=0;
 	dbg=0;

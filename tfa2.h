@@ -15,7 +15,8 @@ class tfa2_decoder: public decoder
 	void store_bit(int bit);
 	void flush(int rssi,int offset=0);
  private:
-	sensor_e type;
+	void flush_tfa(int rssi,int offset=0);
+	void flush_tx22(int rssi,int offset=0);
 	int invert;
 	uint32_t sr;
         int sr_cnt;
@@ -27,7 +28,7 @@ class tfa2_decoder: public decoder
 
 class tfa2_demod: public demodulator {
  public:
-	tfa2_demod(decoder *_dec, int spb);
+	tfa2_demod(decoder *_dec, int spb, double iir_fac=0.5);
 	void reset(void);
 	int demod(int thresh, int pwr, int index, int16_t *iq);
 

@@ -10,7 +10,7 @@ using std::string;
 class tfa1_decoder: public decoder
 {
  public:
-	tfa1_decoder(void);
+	tfa1_decoder(sensor_e _type);
 	void store_bit(int bit);
 	void flush(int rssi, int offset=0);
  private:

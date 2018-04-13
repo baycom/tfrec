@@ -14,6 +14,8 @@
 
 #include "tfa1.h"
 #include "tfa2.h"
+#include "whb.h"
+#include "crc32.h"
 
 //-------------------------------------------------------------------------
 void timeout_handler(int sig)
@@ -35,11 +37,19 @@ void usage(void)
 		" -t <thresh> : Set RF trigger threshold (default 0=auto)\n"
 		" -m <mode>   : 0: exec handler for every message (default), 1: summary at program exit\n"
 		" -w <timeout>: Run for <timeout> seconds (default: 0=forever)\n"
-		" -T <types>  : Bitmask of sensor types (1: TFA_1/KlimaLogg Pro, 2: TFA_2/17240, 4: TFA_3/9600), default: all\n"
+		" -T <types>  : HEX Bitmask of sensor types (see below), default: 7 = TFA_1 |  TFA_2 | TFA_3 \n"
 		" -q          : Quiet, do not print message to stdout\n"
 		" -S <file>   : Save IQ-file for later debugging\n"
 		" -L <file>   : Load IQ-file instead of stick data\n"
 		);
+	fprintf(stderr,
+		"\nBitmask values for supported types (hex): \n"
+		"\t%x: TFA_1/KlimaLogg Pro (TFA 30.3180, 30.3181, 30.3199)\n"
+		"\t%x: TFA_2/17240 (TFA 30.3143-3147, 30.3159, 30.3187; Technoline TX21, TX25, TX29, TX37)\n"
+		"\t%x: TFA_3/9600 (TFA 30.3155-3156; Technoline TX35)\n"
+		"\t%x: Technoline TX22\n"
+		"\t%x: TFA WeatherHub\n",
+		1<<TFA_1,1<<TFA_2,1<<TFA_3,1<<TX22,1<<TFA_WHB);
 }
 //-------------------------------------------------------------------------
 int main(int argc, char **argv)
@@ -56,7 +66,7 @@ int main(int argc, char **argv)
 	int deviceindex=0;
 	char *device=NULL;
 	int types=0xff;
-	
+
 	while(1) {
 		signed char c=getopt(argc,argv,
 			      "d:Df:g:e:t:m:w:qT:S:L:h");
@@ -94,7 +104,7 @@ int main(int argc, char **argv)
 			debug=-1;
 			break;
 		case 'T':
-			types=atoi(optarg);
+			types=strtol(optarg,NULL,16);
 			break;
 		case 'S':
 			dumpfile=strdup(optarg);
@@ -120,7 +130,7 @@ int main(int argc, char **argv)
 	if (types&(1<<TFA_1)) {
 		// TFA1 (KlimaLoggPro)	
 		printf("Registering demod for TFA_1 KlimaLoggPro\n");
-		decoder *tfa1_dec=new tfa1_decoder();	
+		decoder *tfa1_dec=new tfa1_decoder(TFA_1);	
 		tfa1_dec->set_params(exec, mode, debug);
 		demods.push_back(new tfa1_demod(tfa1_dec));
 	}
@@ -139,6 +149,29 @@ int main(int argc, char **argv)
 		decoder *tfa3_dec=new tfa2_decoder(TFA_3);
 		tfa3_dec->set_params(exec, mode, debug);
 		demods.push_back(new tfa2_demod( tfa3_dec, (1536000/4.0)/9600));
+	}
+
+	if (types&(1<<TX22)) {
+		// TX22
+		printf("Registering demod for TX22, 8842 bit/s\n");
+		decoder *tx22_dec=new tfa2_decoder(TX22);
+		tx22_dec->set_params(exec, mode, debug);
+		demods.push_back(new tfa2_demod( tx22_dec, (1536000/4.0)/8842));
+	}
+	/*
+	if (types&(1<<TFA_WHP)) {
+		// Rain sensor pulse
+		printf("Registering demod for TFA_WHP , 4000 bit/s\n");
+		decoder *tfa4_dec=new tfa2_decoder(TFA_WHP);
+		tfa4_dec->set_params(exec, mode, debug);
+		demods.push_back(new tfa2_demod( tfa4_dec, (1536000/4.0)/4000));
+	}
+	*/
+	if (types&(1<<TFA_WHB)) {
+		printf("Registering demod for TFA_WHB sensors, 6000 bit/s\n");
+		decoder *whb_dec=new whb_decoder(TFA_WHB);
+		whb_dec->set_params(exec, mode, debug);
+		demods.push_back(new whb_demod( whb_dec, (1536000/4.0)/6000));
 	}
 	
 	fsk_demod fsk(&demods, thresh, debug);

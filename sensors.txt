@@ -1,9 +1,12 @@
 ## tfrec - A SDR tool for receiving wireless sensor data
-(c) 2017 Georg Acher & Deti Fliegl, {acher|fliegl}(at)baycom.de
+(c) 2017-2018 Georg Acher & Deti Fliegl, {acher|fliegl}(at)baycom.de
 
-tfrec-supported sensors overview 
+tfrec-supported sensors overview (TFA, LaCrosse, etc.)
+(see todo.txt for unknown/unsupported sensors)
+
 *) educated guess, not tested/verified. Please let me know if other sensors also work!
 #) Success reported by users
+X) Probably never supported
 
             Type Temp1 Temp2 Humid    ID          LCD Baudrate  Mod      Sync   Period Init-Msg   Notes
 30.3180.IT  TFA_1  X     -     X    Unique 15bit   X   38400    FM-NRZS  2d d4  10s    b26-00-56
@@ -19,8 +22,19 @@ tfrec-supported sensors overview
 30.3155.WD  TFA_3  X     -     X    Random 6bit    X    9600    FM-NRZ   2d d4  4s     p32
 30.3156.WD# TFA_3  X     -     -    Random 6bit    -    9600    FM-NRZ   2d d4  4s     ?
 
+30.3306.02X TFA_WHP -	 -     -    none   	   -	~4000	FM-NRZ	 ea 44	  -      -	Rain sensor, simple mode
+30.3306.02  TFA_WHD x	 -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b -      -	Rain sensor, WeatherHub
 
-Temp2: External temperature sensor (NTC 10k @ 25 degC)
+Notes:
+
+30.3181/Temp1, 30.3143/Temp2: External temperature sensor (NTC 10k @ 25 degC)
+
+30.3306.02:
+The rain sensor ("WeatherHub") has two transmission modes:
+- 16 fixed content packets (NRZ) with 5 bytes per pulse with zig-zagged center frequency per telegram
+- 2 packets in PSK/NRZS/G3RUH with 41 bytes each, containing ID, values, etc.
+- 2.5ml/pulse @ area 100cm^2 -> 250ml/m^2 = 0.25mm/m^2 per pulse
+- Temperature sensor not very precise
 
 -----------------------------------------------------------------------------
 
@@ -45,6 +59,7 @@ Stations for TFA2-sensors (type 1)
 
 Stations for TFA2-sensors (type 2?)
 	30.3013.IT 
+	30.3030.IT
 	35.1036.IT 
 	35.1045.IT 
 	35.1070.IT 

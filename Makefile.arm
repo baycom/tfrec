@@ -18,7 +18,7 @@ LIBS=-lm $(PKG_LIBS) -lpthread
 LDFLAGS=$(PROFILING) -rdynamic
 
 CFILES=main.cpp engine.cpp  dsp_stuff.cpp fm_demod.cpp decoder.cpp crc8.cpp \
-	tfa1.cpp tfa2.cpp utils.cpp sdr.cpp
+	tfa1.cpp tfa2.cpp utils.cpp sdr.cpp whb.cpp crc32.cpp
 
 OBJS = $(CFILES:.cpp=.o)
 

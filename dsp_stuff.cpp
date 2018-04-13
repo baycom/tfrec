@@ -27,6 +27,14 @@
 // 2nd order butterworth lowpass
 iir2::iir2(double cutoff)
 {
+	yn=yn1=yn2=0;
+	dn1=dn2=0;
+	//printf("%f %f %f %f %f\n",a1,a2,b0,b1,b2);
+	set(cutoff);
+}
+//-------------------------------------------------------------------------
+void iir2::set(double cutoff)
+{
 	double i=1.0/tan(M_PI*cutoff);
 	double s=sqrt(2);
 	b0=1/(1+s*i+i*i);
@@ -34,9 +42,6 @@ iir2::iir2(double cutoff)
 	b2=b0;
 	a1=2*(i*i-1)*b0;
 	a2=-(1-s*i+i*i)*b0;
-	yn=yn1=yn2=0;
-	dn1=dn2=0;
-	//printf("%f %f %f %f %f\n",a1,a2,b0,b1,b2);
 }
 //-------------------------------------------------------------------------
 double iir2::step(double dn)

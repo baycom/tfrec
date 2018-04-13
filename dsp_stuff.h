@@ -19,7 +19,7 @@ class iir2 {
   public:
 	iir2(double cutoff);
 	double step(double din);
-	
+	void set(double cutoff);
   private:
   	double dn1,dn2;
   	double yn,yn1,yn2;
