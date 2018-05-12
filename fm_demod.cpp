@@ -59,17 +59,17 @@ void fsk_demod::process(int16_t *data_iq, int len)
 
 	triggered_avg=(31*triggered_avg+triggered)/32;
 	
-	if (dbg>=2)
+	if (dbg>=3)
 		printf("Trigger ratio %i/%i, avg %i \n",triggered,len/2,triggered_avg);
 	
 	if (thresh_mode==1 && (runs&3)==0) {
 		if (triggered_avg >= len/32) {
 			thresh+=2;
-			if (dbg>=2)
+			if (dbg>=3)
 				printf("Increased trigger level to %i\n",thresh);
 		} else if (triggered_avg <= len/64 && thresh>50) {
 			thresh-=2;
-			if (dbg>=2)
+			if (dbg>=3)
 				printf("Decreased trigger level to %i\n",thresh);
 		}
 	}		

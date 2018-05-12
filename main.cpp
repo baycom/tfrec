@@ -37,6 +37,7 @@ void usage(void)
 		" -t <thresh> : Set RF trigger threshold (default 0=auto)\n"
 		" -m <mode>   : 0: exec handler for every message (default), 1: summary at program exit\n"
 		" -w <timeout>: Run for <timeout> seconds (default: 0=forever)\n"
+		" -W          : Wider filter, tolerate more frequency offset\n"
 		" -T <types>  : HEX Bitmask of sensor types (see below), default: 7 = TFA_1 |  TFA_2 | TFA_3 \n"
 		" -q          : Quiet, do not print message to stdout\n"
 		" -S <file>   : Save IQ-file for later debugging\n"
@@ -47,8 +48,8 @@ void usage(void)
 		"\t%x: TFA_1/KlimaLogg Pro (TFA 30.3180, 30.3181, 30.3199)\n"
 		"\t%x: TFA_2/17240 (TFA 30.3143-3147, 30.3159, 30.3187; Technoline TX21, TX25, TX29, TX37)\n"
 		"\t%x: TFA_3/9600 (TFA 30.3155-3156; Technoline TX35)\n"
-		"\t%x: Technoline TX22\n"
-		"\t%x: TFA WeatherHub\n",
+		"\t%x: Technoline TX22 (not enabled by default!)\n"
+		"\t%x: TFA WeatherHub (not enabled by default!)\n",
 		1<<TFA_1,1<<TFA_2,1<<TFA_3,1<<TX22,1<<TFA_WHB);
 }
 //-------------------------------------------------------------------------
@@ -64,12 +65,12 @@ int main(int argc, char **argv)
 	int dumpmode=0; // -1: read dump file, 0: normal (data from stick), 1: save data
 	char *dumpfile=NULL;
 	int deviceindex=0;
-	char *device=NULL;
-	int types=0xff;
-
+	int types=0x07;
+	int filter=0;
+	
 	while(1) {
 		signed char c=getopt(argc,argv,
-			      "d:Df:g:e:t:m:w:qT:S:L:h");
+			      "d:Df:g:e:t:m:w:WqT:S:L:h");
 		if (c==-1)
 			break;
 		switch (c) {
@@ -99,6 +100,9 @@ int main(int argc, char **argv)
 			break;
 		case 'w':
 			timeout=atoi(optarg);
+			break;
+		case 'W':
+			filter=1;
 			break;
 		case 'q':
 			debug=-1;
@@ -176,7 +180,7 @@ int main(int argc, char **argv)
 	
 	fsk_demod fsk(&demods, thresh, debug);
 
-	engine e(deviceindex,freq,gain,&fsk,debug,dumpmode,dumpfile);
+	engine e(deviceindex,freq,gain,filter,&fsk,debug,dumpmode,dumpfile);
 	signal(SIGALRM, timeout_handler);
 	e.run(timeout);
 

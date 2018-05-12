@@ -30,7 +30,7 @@ class decimate {
   public:
 	decimate(void);
 	~decimate(void);
-	int process2x(int16_t *data, int length); // IQ
+	int process2x(int16_t *data, int length, int type); // IQ
 	int process2x1(int16_t *data, int length); // IQ
   private:
 	int16_t hist[128];

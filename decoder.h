@@ -20,9 +20,9 @@ enum sensor_e {
 
 typedef struct {
 	sensor_e type;
-	int id;
+	uint64_t id;
 	double temp;
-	int humidity;
+        double humidity;
 	int alarm;
 	int flags;
 	int sequence;	
@@ -40,17 +40,19 @@ class decoder
 	virtual void store_data(sensordata_t &d);
 	virtual void execute_handler(sensordata_t &d);
 	virtual void flush_storage(void);
+	virtual int has_sync(void) {return synced;};
 	int count(void) {return data.size();}
 	sensor_e get_type(void) {return type;}
  protected:
 	int dbg;
-	int bad;	
+	int bad;
+	int synced;
 	sensor_e type;
  private:
 
 	char *handler;
 	int mode;
-	map<int,sensordata_t> data;
+	map<uint64_t,sensordata_t> data;
 };
 
 class demodulator

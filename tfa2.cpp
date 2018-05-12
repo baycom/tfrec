@@ -89,74 +89,103 @@ void tfa2_decoder::flush_tx22(int rssi, int offset)
 		int lowbat=(rdata[3]>>3)&1;
 		int num=rdata[3]&7;
 
-		crc_val=rdata[2*num+6];
-		crc_calc=crc->calc(&rdata[2],3+2*num);
+		crc_val=rdata[2*num+4];
+		crc_calc=crc->calc(&rdata[2],2+2*num);
 		if (crc_val!=crc_calc)
 			goto bad;
 		if (num>8)
 			goto bad;
-		
-		
+
+		int have_temp=0,have_hum=0, have_rain=0, have_wind=0, have_gust=0;
+		double temp=0,hum=0,rain=0,wdir=0,wspeed=0,wgust=0;
+				
 		for(int n=0;n<num;n++) {
 			int t=rdata[4+n*2]>>4;
-			int real_id=(type<<28)|(id<<4)|t;
 
-			sensordata_t sd;
-			sd.type=type;
-			sd.id=real_id;
-			sd.temp=0;
-			sd.humidity=0;
-			sd.sequence=0;
-			sd.alarm=error|lowbat;
-			sd.rssi=rssi;
-			sd.flags=0;
-			sd.ts=time(0);
-			
+
 			switch (t) {
 			case 0:  { // Temp
 				double v=(rdata[4+n*2]&0xf)*100+
 					(rdata[4+n*2+1]>>4)*10+
 					(rdata[4+n*2+1]&0xf);
-				v=(v/10)-40;
-				sd.temp=v;
-				store_data(sd);
+				temp=(v/10)-40;
+				have_temp=1;
 			}
 				break;
 			case 1: { // Hum
 				int v=(rdata[4+n*2]&0xf)*100+
 					(rdata[4+n*2+1]>>4)*10+
 					(rdata[4+n*2+1]&0xf);
-				sd.humidity=v;
-				store_data(sd);
+				hum=v;
+				have_hum=1;
 			}
 				break;
 			case 2: { // rain counter
 				int v=((rdata[4+n*2]&0xf)<<8)+
 					rdata[4+n*2+1];
-				sd.temp=v;
-				store_data(sd);
+				rain=v;
+				have_rain=1;
 			}
 				break;
 			case 3: { // wind dir/speed
 				double d=(rdata[4+n*2]&0xf)*22.5;
 				double s=rdata[4+n*2+1]/10.0;
-				sd.temp=s;
-				sd.humidity=d;
-				store_data(sd);
+				wdir=d;
+				wspeed=s;
+				have_wind=1;
 			}
 				break;
 			case 4: { // gust
 				double s=(((rdata[4+n*2]&0xf)<<8)+
 					  rdata[4+n*2+1])/10.0;
-				sd.temp=s;
-				store_data(sd);
+				wgust=s;
+				have_gust=1;
 			}
 				break;
 			default:
 				break;
 			}	
 		}
-				
+		sensordata_t sd;
+		sd.type=type;
+		sd.temp=0;
+		sd.humidity=0;
+		sd.sequence=0;
+		sd.alarm=error|lowbat;
+		sd.rssi=rssi;
+		sd.flags=0;
+		sd.ts=time(0);
+		
+		int new_id=(type<<28)|(id<<4);
+
+		if (have_temp) {
+			sd.id=new_id;
+			sd.temp=temp;
+			sd.humidity=hum;
+			store_data(sd);
+		}
+		if (have_rain) {
+			sd.id=new_id|2;
+			sd.temp=rain;
+			sd.humidity=0;
+			store_data(sd);
+		}
+		if (have_wind) {
+			sd.id=new_id|3;
+			sd.temp=wspeed;
+			sd.humidity=wdir;
+			store_data(sd);
+		}
+		if (have_gust) {
+			sd.id=new_id|4;
+			sd.temp=wgust;
+			sd.humidity=0;
+			store_data(sd);
+		}
+
+		if (dbg>1)
+			printf("TX22 ID %x, temp %g (%i), hum %g (%i), rain %g (%i), w_speed %g (%i), w_dir %g, w_gust %g (%i)\n",
+			       new_id, temp, have_temp, hum, have_hum, rain, have_rain, wspeed, have_wind, wdir, wgust, have_gust);
 		sr_cnt=-1;
 		sr=0;
 		byte_cnt=0;
@@ -291,13 +320,17 @@ void tfa2_demod::reset(void)
 	dmin=32767;
 	dmax=-32767;
 	last_bit=0;
-	rssi=0;	
+	rssi=0;
+	est_spb=spb;
 }
 //-------------------------------------------------------------------------
+#define DBG_DUMP
+#ifdef DBG_DUMP
 // More debugging
 FILE *fx=NULL;
 FILE *fy=NULL;
 int fc=0;
+#endif
 
 // Real FM/NRZ demodulation (compared to tfa1.cpp...)
 // Note: index increases by 2 for each IQ-sample!
@@ -335,7 +368,7 @@ int tfa2_demod::demod(int thresh, int pwr, int index, int16_t *iq)
 		dev=ld;
 
 		// cheap compensation of 0/1 asymmetry if deviation limited in preceeding filter
-		int noffset=offset*0.75; 
+		int noffset=0.9*offset; 
 		
 		int bit=0;
 		int margin=32;
@@ -344,27 +377,22 @@ int tfa2_demod::demod(int thresh, int pwr, int index, int16_t *iq)
 		if (dev>noffset+(dmax/margin))
 			bit=1;
 
-#if 0
-		if (!fx)
-			fx=fopen("blub","w");
-		if (!fy)
-			fy=fopen("blub1","w");
-		if (fx)
-			fprintf(fx,"%i %i\n",fc,ld);
-		if (fy)
-			fprintf(fy,"%i %i\n",fc,(bit?dmax:dmin));
-#endif
-
+		int bdbg=0;
 		if ((dev>noffset+dmax/margin || dev< noffset+dmin/margin) && bit!=last_bit) {
 			if (index>(last_bit_idx+8)) { // Ignore glitches
 				bitcnt++;
-				
+				int tdiff=index-last_bit_idx;
 				// Determine number of bits depending on time between edges
-				if (index-last_bit_idx>spb/4) {				
-
+				if (tdiff>spb/4 && tdiff<16*spb) {
+					#if 0
+					if (bitcnt>2 && bitcnt<16) {
+						est_spb=(3*est_spb + (tdiff)/2)/4;
+						//printf("%i EST %.1f %i\n",fc, est_spb,tdiff);
+					}
+					#endif
 					//printf("%i %i %i \n",bit,last_bit,(index-last_bit_idx)/2);
 					int numbits=(index-last_bit_idx)/2;
-					numbits=(numbits+spb/2)/spb;
+					numbits=(numbits+est_spb/2)/est_spb;
 					if (numbits<16) { // Sanity
 						//printf("   %i %i %i %i nb %i\n",bit,last_bit,dev,(index-last_bit_idx)/2,numbits);
 						for(int n=1;n<numbits;n++) {
@@ -373,12 +401,26 @@ int tfa2_demod::demod(int thresh, int pwr, int index, int16_t *iq)
 					}
 					dec->store_bit(bit);
 					last_bit=bit;
+					bdbg=bit;
 				}
 			}
 			if (index-last_bit_idx>2)
 				last_bit_idx=index;
 		}
+		
+#ifdef DBG_DUMP
+		if (!fx)
+			fx=fopen("blub","w");
+		if (!fy)
+			fy=fopen("blub1","w");
+		if (fx)
+			fprintf(fx,"%i %i %i\n",fc,ld,bdbg*(noffset+dmin/margin));
+		if (fy)
+			fprintf(fy,"%i %i\n",fc,(bit?dmax:dmin));
+
 		fc++;
+#endif
+
 		// Flush data
 		if (!timeout_cnt) {
 			// Add some trailing bits

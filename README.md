@@ -1,7 +1,7 @@
 ## tfrec - A SDR tool for receiving wireless sensor data
 (c) 2017 Georg Acher & Deti Fliegl, {acher|fliegl}(at)baycom.de
 
-SEO Keywords: TFA KlimaLogg LaCrosse decoder SDR sensor Linux :)
+SEO Keywords: TFA KlimaLogg LaCrosse decoder SDR WeatherHub sensor Linux :)
 
 This tool uses a RTL2832-based SDR stick to decode data sent by the
 KlimaLogg Pro (and recently some other) temperature sensors made by TFA
@@ -17,6 +17,9 @@ Supported sensors are (see sensors.txt for more details):
 - NRZS/38400baud: 30.3180.IT, 30.3181.IT and probably 30.3199 (pool sensor)
 - NRZ/9600baud:   30.3155.WD, 30.3156.WD
 - NRZ/17240baud:  30.3143.IT, 30.3144.IT, 30.3147.IT, 30.3157.IT, 30.3159.IT and probably 30.3146.IT
+- NRZ/8842baud:   TX22
+- NRZS/6000baud:  WeatherHub sensors (TFA 30.3303.02, 30.3305.02, 30.3306.02, 30.3307.02 30.3311.02,
+                  probably others like Technoline Mobile Alerts)
 
 It is likely that the other LaCrosse-based sensors with 9600/17240baud also
 work:
@@ -24,11 +27,6 @@ work:
  TX21IT, TX25IT, TX27IT, TX29IT, TX35, TX37 (label Technoline)
 
 Please let me know if you have any success :)
-
-Sensors in development (not enabled by default):
-
-LaCrosse TX22 (Type 8)
-TFA Weatherhub (Type 20)
 
 ## License
 
@@ -53,12 +51,14 @@ GPLv2   http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 ## Installation
 
 For x86/x86_64/MacOS simply type make. For RasPI3 use "make -f
-Makefile.arm". For other architectures you need to adjust the makefile
-flags.
+Makefile.arm", for RasPI2 "make -f Makefile.raspi2". For other
+architectures you need to adjust the makefile flags.
 
 The resulting executable is "tfrec". All options can be seen with "tfrec -h".
 
-## Overview and internals
+## Overview and internals for KlimaLogg Pro sensors
+
+(see below for other sensors)
 
 KlimaLogg Pro consists of a standalone base station (30.3039), up to 8
 wireless sensors (30.3180.IT) and a USB-stick to download the base station
@@ -110,7 +110,8 @@ WLAN, DECT or other RF stuff that may disturb the SDR stick.
 To reduce other disturbances, place a sensor in about 2m distance for the
 first test.
 
-By default, all three sensor types are enabled (see -T option).
+By default, three sensor types (TFA_1/2/3) are enabled (see -T option
+for enabling TX22 and WeatherHub).
 
 Run "tfrec -D". This uses default values and should print a hexdump of
 received telegrams and the decoded values like this (KlimaLogg Pro sensor):
@@ -122,10 +123,10 @@ This message is sensor 65b0 (hex), 22degC, 35% relative humidity, battery OK.
 The sequence counts from 0 to f for every message and allows to detect
 missing messages.
 
-RSSI is the receiver strength (values between 50 and 82). Typically
+RSSI is the receiver strength (usually values between 50 and 85). Typically
 telegrams with RSSI below 55 tend to have errors.  Please note that in the
 default auto gain mode RSSI values among different sensors can not be
-compared.
+compared. Use fixed gain for determining weaker sensors.
 
 Non-KlimaLoggPro sensors (3143,...) have an additional offset value in the
 debug output. Subtract that from 868250 if you have reception problems (see
@@ -148,15 +149,20 @@ Other useful options:
 - -d <index or name>: Use specified stick (use -d ? to list all sticks)
 - -w <timeout>: Run for timeout seconds and exit
 - -m <mode>: If 1, store data and only execute one handler for each ID at exit (use with -w)
-- -T <type>: Enable individual sensor types, bitmask ORing the following choices:
+- -W: Use wider filter (+-80kHz vs +-44kHz), tolerates more frequency offset, but is less sensitive
+- -T <type>: Enable individual sensor types, bitmask ORing the following choices as hex value:
   -		1: TFA_1 (KlimaLoggPro) 
   -		2: TFA_2 (17240bit/s)
   -		4: TFA_3 (9600bit/s)
+  -             8: TX22 (8842bit/s)          NOT ENABLED BY DEFAULT!
+  -            20: WeatherHub (6000bit/s)    NOT ENABLED BY DEFAULT!
+  Example: "-T 2a" enables TFA_2 (2), TX22 (8) and WeatherHub (20)
 - -t <trigger>: Manually set trigger level (usually 200-1000). If 0, the level is adjusted
                 automatically (default)
 
 ## Support for non-KlimaLoggPro TFA/LaCrosse sensors:
 
+### Non-WeatherHub (TFA_2, TFA_3, TX22)
 (See tfa2.c for more details on the protocol)
 
 These sensors do not have a unique ID. Each time the battery is inserted, a
@@ -173,12 +179,15 @@ the following scheme:
   d = 1 (external temperature sensor for 3143)
   d = 1 only humidity (TX22)
   d = 2 rain counter as temperature value (TX22)
-  d = 3 speed as temperature, direction as humidity (TX22)
-  d = 4 gust speed as temperature (TX22)
+  d = 3 speed as temperature in m/s, direction as humidity (TX22)
+  d = 4 gust speed as temperature in m/s (TX22)
 
 The output format for the handler is identical to the other sensors. The
 sequence counter is set to 0. If the sensor does not support humidity, it is
 set to 0.
+
+Please note that the TX22 system can deliver multiple outputs for each
+of its subsystems.
 
 The debug output also shows the frequency offset like this:
 
@@ -195,16 +204,52 @@ steps...
 Note #2: My 3144 sensor is about 25kHz lower (at 868225kHz), maybe this
 affects all sensors.
 
+### WeatherHub sensors
+
+These sensors have unique 6 byte IDs, usually printed on sensor. The
+first byte describes the sensor type. Sensors values for rain, wind
+and door states are mapped like TX22 by the last nibble of the ID 
+at the temperature and humidity values:
+
+IIIIIIIIIIIIT
+
+I: 6 Byte ID, T: Type (4bit)
+T=0: temperature, humidity (0 if not available)
+T=2: Rain sensor: tempval=rain-counter, hum=time in s since last pulse
+T=3: Wind sensor: tempval=speed (m/s), hum=direction (degree)
+T=4: Wind sensor: tempval=gust speed (m/s)
+T=5: Door/water sensor: tempval=state (1=open/wet), hum=time in s since last event (only door sensor)
+
+Thus, some sensor types deliver two output messages in one go, see the following examples:
+
+Wind sensor with ID 0b3d9ddeeabc:
+
+0b3d9ddeeabc2 +0.7 270 950 0 92 0 1525996300    -> 2=Wind 0.7m/s from west (270deg)
+0b3d9ddeeabc3 +5.8 0 950 0 92 0 1525996300      -> 3=Gust 5.8m/s
+
+Temperature/Humidity/Wetness sensor with ID 0469fe50dabc:
+
+0469fe50dabc0 +21.3 51 16394 0 90 0 1525979222  -> 0= Temp +21.3, humidity 51%
+0469fe50dabc5 +1.0 0 16394 0 90 0 1525979222    -> 5= State=1 (wet)
+
+Rain sensor with ID 0833c2708abc (0.25mm/m^2 rain per count)
+
+0833c2708abc2 +9.0 774 10 0 92 0 1525998514   -> 2= Counter 9, last event 774s ago
+0833c2708abc0 +21.0 0 10 0 92 0 1525998514    -> 0= Temp 21.0
+
+Some sensors (rain, wind, door) send a history of previous values. This history is
+currently just internally decoded but not used. You can see if with the "-DD" option.
+
 ## Troubleshooting
 
 - No messages at all
 
  If the sensors should be supported, please send me a dump (see below).
 
- Run with -DD. This prints the trigger events like 400/32768. If there
+ Run with -DDD. This prints the trigger events like 400/32768. If there
  is too much noise, the first number reaches the second. It is very
  unlikely that decoding works in this case, so the trigger
- sensitivityis automatically adjusted without altering the hardware
+ sensitivity is automatically adjusted without altering the hardware
  gain. If this doesn't work for you, try the manual gain option or set
  the trigger level manually with '-t 1000' or even higher values.
 
@@ -217,9 +262,10 @@ affects all sensors.
  At strong RSSI: Reduce gain (manual gain), reduce strong RF sources nearby
  At weak RSSI:   Use other antenna position
 
- My 3144 sensor has a frequency offset and may require a slightly different
- frequency for reliable reception: Try with '-f 868225' or look at the
- offset value in the debug output.
+ My 3144 sensor has a frequency offset and may require a slightly
+ different frequency for reliable reception: Try with '-f 868225', use
+ "-W" for a wider filter or look at the offset value in the debug
+ output.
 
 - Unknown IDs
 
@@ -231,6 +277,13 @@ affects all sensors.
 
  Disable unwanted sensor types with -T or increase trigger with -t.
 
+- "Unsupported sensor type" for WeatherHub sensors
+
+There is a "secret" type specific value (CRC init) that can only be
+safely calculated with at least different 2 raw messages. I have
+determined it for 5 types (03, 04, 08, 0b and 10) and also implemented
+the value decoding just for these sensors. For other types please send
+me a few raw messages received by the -D option.
 
 ## Dump save/load
 

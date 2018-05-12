@@ -143,7 +143,6 @@ tfa1_demod::tfa1_demod(decoder *_dec) : demodulator(_dec)
 int tfa1_demod::demod(int thresh, int pwr, int index, int16_t *iq)
 {
 	int triggered=0;
-	static int ld=0;
 	
 	if (pwr>thresh)
 		timeout_cnt=40*BITPERIOD;

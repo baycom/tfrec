@@ -1,29 +1,66 @@
 #include <math.h>
+#include <map>
 
 #include "whb.h"
 #include "dsp_stuff.h"
+
 /*
   TFA WeatherHub
   868.250MHz
   6000 bits/second
   PSK-NRZS-G3RUH-scrambled
 
-  Format:
-  4b 2d d4 2b LL II II II II II II TV VV ... CC CC CC CC
+  RF layer:
+
+  4b 2d d4 2b LL II II II II II II <Payload> CC CC CC CC
 
   4b 2d d4 2b: Sync word
 
-  LL: Packet length from LL to last CC (fixed 37?)
+  LL: Packet length from LL to last CC (depends on type)
 
-  II: 6 Byte ID (printed on the sensor)
+  II: 6 Byte ID (printed on the sensor, first byte type)
 
-  T: 5? bit type
-  VVV: 11 bit value
+  Thanks to CRC reverse-engineering tool "reveng": http://reveng.sourceforge.net/
+  CC: CRC-32, poly=0x04c11db7  init=<see below>  refin=false  refout=false  xorout=0x00000000
+  Init-value depends on type (see crc_initvals)!
 
-  CC: CRC-32, poly=0x04c11db7  init=0x29f0f49b  refin=false  refout=false  xorout=0x00000000
-  thanks to CRC reverse-engineering tool "reveng": http://reveng.sourceforge.net/
+  See https://github.com/sarnau/MMMMobileAlerts/blob/master/MobileAlertsGatewayBinaryUpload.markdown
+  for more details on the sensor payload!    
+
+  ID-Mapping: Sensor-ID gets an appended nibble like TX22 (-> 6.5byte ID!)
+  ID.0: temperature, humidity (0 if not available)
+  ID.2: Rain sensor: tempval=rain-counter, hum=time since last pulse
+  ID.3: Wind sensor: tempval=speed (m/s), hum=direction (degree)
+  ID.4: Wind sensor: tempval=gust speed (m/s)
+  ID.5: Door/water-sensor: tempval=state, hum=time since last event
   
  */
+#include <stdlib.h>
+using std::map;
+
+map<uint32_t, uint32_t> crc_initvals = {
+     // { 0x02, 0x???????? },   // Only temp
+	{ 0x03, 0xf59c5a1e}, // Temp/hum
+	{ 0x04, 0x98e1d11f}, // Temp/hum/water
+	{ 0x08, 0x29f0f49b}, // Rain sensor (+ temp)
+	{ 0x0b, 0xe7720ae4}, // Wind sensor
+	{ 0x10, 0x62d0afc1}, // Door sensor
+};
+
+// Translates time units in seconds multiplier
+uint32_t timeunit_tab[4]= {
+	24*60*60, // day
+	60*60,    // hour
+	60,       // minutes
+	1         // seconds
+};
+
+#define BE16(x) ( ((*(x))<<8)  |  (*(x+1)) )
+#define BE24(x) ( ((*(x))<<16) | ((*(x+1))<<8) |  (*(x+2)) )
+#define BE32(x) ( ((*(x))<<24) | ((*(x+1))<<16) | ((*(x+2))<<8) | (*(x+3)) )
+
+#define BE48(x) ( (((uint64_t)*(x))<<40) | (((uint64_t)*(x+1))<<32) | (((uint64_t)*(x+2))<<24) | \
+	                  (((uint64_t)*(x+3))<<16) |  (((uint64_t)*(x+4))<<8) | (((uint64_t)*(x+5)))  )
 
 //-------------------------------------------------------------------------
 whb_decoder::whb_decoder(sensor_e _type) : decoder(_type)
@@ -34,46 +71,260 @@ whb_decoder::whb_decoder(sensor_e _type) : decoder(_type)
 	snum=0;
 	bad=0;
 	crc=new crc32(0x04c11db7);
+#if 0	
+	{
+		uint8_t msg[4];
+		for(uint32_t i=0;i<0xffffffff;i++) {
+			msg[0]=i>>24;
+			msg[1]=i>>16;
+			msg[2]=i>>8;
+			msg[3]=i;
+			uint32_t crc_calc=crc->calc(msg, 4, 0);
+			if (crc_calc== 0x83f50b46)
+				printf("%x\n",i);
+		}
+		exit(0);
+	}
+#endif
 	last_bit=0;
 	lfsr=0;
 	psk=last_psk=0;
 	nrzs=0;
 }
 //-------------------------------------------------------------------------
+double whb_decoder::cvt_temp(uint16_t raw)
+{
+	if (raw&0x400)
+		return -((raw^0x7ff)+1)/10.0;
+	else
+		return raw/10.0;
+}//-------------------------------------------------------------------------
+// Temp/hum
+void whb_decoder::decode_03(uint8_t *msg,  uint64_t id, int rssi, int offset)
+{
+	uint16_t seq=BE16(msg)&0x3fff;;
+	uint16_t temp=BE16(msg+2)&0x7ff;
+	uint16_t hum=BE16(msg+4)&0xff;
+
+	uint16_t temp_prev=BE16(msg+6)&0x3fff;
+	uint16_t hum_prev=BE16(msg+8)&0xff;
+
+	uint16_t unknown=msg[10];
+	if (dbg)
+		printf("WHB/03 %llx TEMP %g HUM %i, PTEMP %g PHUM %i\n",
+		       id, cvt_temp(temp), hum, cvt_temp(temp_prev), hum_prev);
+
+	sensordata_t sd;
+	sd.type=type;
+	sd.id=(id<<4LL);
+	sd.temp=cvt_temp(temp);
+	sd.humidity=hum;
+	sd.sequence=seq;
+	sd.alarm=0;
+	sd.rssi=rssi;
+	sd.flags=0;
+	sd.ts=time(0);
+	store_data(sd);
+}
+//-------------------------------------------------------------------------
+// Temp/hum/water
+void whb_decoder::decode_04(uint8_t *msg,  uint64_t id, int rssi, int offset)
+{
+	uint16_t seq=BE16(msg)&0x3fff;;
+	uint16_t temp=BE16(msg+2)&0x7ff;
+	uint16_t hum=BE16(msg+4)&0xff;
+	uint8_t wet=*(msg+6);
+
+	uint16_t temp_prev=BE16(msg+7)&0x3fff;
+	uint16_t hum_prev=BE16(msg+9)&0xff;
+	uint16_t wet_prev=*(msg+11);
+
+	if (dbg)
+		printf("WHB/04 %llx TEMP %g HUM %i WET %i, PTEMP %g PHUM %i PWET %i\n",
+		       id, cvt_temp(temp),hum,(wet&1)^1, cvt_temp(temp_prev), hum_prev, (wet_prev&1)^1);
+	sensordata_t sd;
+	sd.type=type;
+	sd.id=(id<<4LL);
+	sd.temp=cvt_temp(temp);
+	sd.humidity=hum;
+	sd.sequence=seq;
+	sd.alarm=0;
+	sd.rssi=rssi;
+	sd.flags=0;
+	sd.ts=time(0);
+	store_data(sd);
+
+	sd.id=(id<<4LL)|5;
+	sd.temp=(wet&1)^1;
+	sd.humidity=0;
+	store_data(sd);
+}
+//-------------------------------------------------------------------------
+// Rain sensor, store counter and temperature
+void whb_decoder::decode_08(uint8_t *msg, uint64_t id, int rssi, int offset)
+{
+	uint16_t seq=BE16(msg)&0x3fff;;
+	uint8_t event=msg[2]>>6;
+	uint16_t temp=BE16(msg+2)&0x07ff; // 11Bit signed, 0.1steps
+	double temp_real=cvt_temp(temp);
+	uint16_t cnt=BE16(msg+4);
+	uint32_t times[10];
+	printf("WHB/08 %llx cnt %i\n",id, cnt);
+	for(int i=0;i<10;i++) {
+		uint16_t x=BE16(msg+6+2*i);
+		times[i]=timeunit_tab[(x>>14)&3] * (x&0x3fff);
+		if (dbg>1)
+			printf("WHB/08 %llx #%i time %i\n",id,i,times[i]);
+	}
+
+	sensordata_t sd;
+	sd.type=type;
+	sd.id=(id<<4LL)|2;
+	sd.temp=cnt;
+	sd.humidity=times[1];
+	sd.sequence=seq;
+	sd.alarm=0;
+	sd.rssi=rssi;
+	sd.flags=0;
+	sd.ts=time(0);
+	store_data(sd);
+
+	sd.id=(id<<4);
+	sd.temp=temp_real;
+	sd.humidity=0;
+	store_data(sd);
+}
+//-------------------------------------------------------------------------
+// Wind sensor
+void whb_decoder::decode_0b(uint8_t *msg, uint64_t id, int rssi, int offset)
+{
+	uint32_t seq=BE24(msg);
+	float dir[6],speed[6],gust[6];
+	uint32_t times[6];
+	for(int i=0;i<6;i++) {
+		uint32_t v=BE32(msg+3+4*i);
+		dir[i]=22.5*(v>>28); // 0: N 90:E 180:S
+		speed[i]= ((v>>16)&0xff + 256*((v>>25)&1))/10.0;
+		gust[i]=  ((v>>8)&0xff + 256*((v>>24)&1))/10.0;
+		times[i]=(v&0xff)*2;
+		if (dbg&& (i==0 || dbg>1))
+			printf("WHB/0b %llx #%i DIR %f SPEED %f GUST %f time %i\n",
+			       id, i,dir[i],speed[i],gust[i],times[i]);
+		
+	}
+	sensordata_t sd;
+	sd.type=type;
+	sd.id=(id<<4LL)|3;
+	sd.temp=speed[0];
+	sd.humidity=dir[0];
+	sd.sequence=seq;
+	sd.alarm=0;
+	sd.rssi=rssi;
+	sd.flags=0;
+	sd.ts=time(0);
+	store_data(sd);
+
+	sd.id=(id<<4)|4;
+	sd.temp=gust[0];
+	sd.humidity=0;
+	store_data(sd);
+}
+//-------------------------------------------------------------------------
+// Door sensor
+void whb_decoder::decode_10(uint8_t *msg, uint64_t id, int rssi, int offset)
+{
+	uint16_t seq=BE16(msg)&0x3fff;
+	uint8_t state[4];
+	uint32_t times[4];
+	for(int i=0;i<4;i++) {
+		uint16_t x=BE16(msg+2+2*i);
+		state[i]=x>>15; // 0=closed
+		times[i]=timeunit_tab[(x>>13)&3] * (x&0x1fff);
+		if (dbg&& (i==0 || dbg>1))
+			printf("WHB/10 %llx #%i %i %i\n",id,i,state[i],times[i]);
+	}
+	sensordata_t sd;
+	sd.type=type;
+	sd.id=(id<<4LL)|5;
+	sd.temp=state[0];
+	sd.humidity=times[1];
+	sd.sequence=seq;
+	sd.alarm=0;
+	sd.rssi=rssi;
+	sd.flags=0;
+	sd.ts=time(0);
+	store_data(sd);
+}
+//-------------------------------------------------------------------------
 void whb_decoder::flush(int rssi, int offset)
 {
 	uint32_t crc_calc=0;
 	uint32_t crc_val=0;
+	int plen; 
+	uint32_t stype;
 	
-	if (byte_cnt<11) // Sync+ID
-		goto ok;
+	if (byte_cnt<11 || byte_cnt>60) // Sanity
+		goto reset;
 	
-	// FIXME: Variable packet length?
+	// FIXME: byte count usually 2-3 bytes longer than real payload
 	if (dbg && byte_cnt) {
-		printf("#%03i %u %i  ",snum++,(uint32_t)time(0),byte_cnt);
-		for(int n=0;n<41;n++)
+		printf("#%03i %u L=%i  ",snum++,(uint32_t)time(0), byte_cnt);
+		for(int n=0;n<byte_cnt;n++)
 			printf("%02x ",rdata[n]);
-		printf("   %i",rssi);
-		puts("");
-	}       	
-	crc_calc=crc->calc(&rdata[4], 33, 0x29f0f49b);
-	crc_val=(rdata[37]<<24) | (rdata[38]<<16) | (rdata[39]<<8) | rdata[40];
+		printf(" RSSI %i ",rssi);
+	}
+	plen=rdata[4]; // payload length
+
+	if (plen>60)
+		goto bad;
+	
+	stype=rdata[5]; // sensor type
+	
+	if (crc_initvals.find(stype)==crc_initvals.end()) {
+		if (dbg)
+			printf("WHB: Probably unsupported sensor type %02x! Please report\n",stype);
+		goto bad;
+	}
+	
+	crc_calc=crc->calc(&rdata[4], plen-4, crc_initvals[stype]);
+	crc_val=(rdata[plen]<<24) | (rdata[plen+1]<<16) | (rdata[plen+2]<<8) | rdata[plen+3];
+
 	if (crc_calc==crc_val) {
-		goto ok;
+		uint64_t id=BE48(&rdata[5]);
+		uint8_t *msg=&rdata[4+1+6];
+		switch(stype) {
+		case 0x03:
+			decode_03(msg, id, rssi, offset);
+			break;
+		case 0x04:
+			decode_04(msg, id, rssi, offset);
+			break;
+		case 0x08:
+			decode_08(msg, id, rssi, offset);
+			break;
+		case 0x0b:
+			decode_0b(msg, id, rssi, offset);
+			break;
+		case 0x10:
+			decode_10(msg, id, rssi, offset);
+			break;
+		}
+		goto reset;
 	}
  bad:
 	bad++;
 	if (dbg) {
 		if (crc_val!=crc_calc)
-			printf("WHB BAD %i RSSI %i (CRC %08x %08x, len %i)\n", bad, rssi,
-			       crc_val,crc_calc, byte_cnt);
+			printf("\nWHB BAD %i RSSI %i (CRC is %08x, should be %08x, len %i, plen %i)\n",
+			       bad, rssi, crc_val,crc_calc, byte_cnt,plen);
 		else
-			printf("WHB BAD %i RSSI %i (SANITY)\n",bad,rssi);
+			printf("\nWHB BAD %i RSSI %i (SANITY)\n",bad,rssi);
 	}
- ok:
+ reset:
 	sr_cnt=-1;
 	sr=0;
 	byte_cnt=0;
+	synced=0;
 }
 //-------------------------------------------------------------------------
 void whb_decoder::store_bit(int bit)
@@ -92,20 +343,21 @@ void whb_decoder::store_bit(int bit)
 	int bit_descrambled=nrzs ^ ((lfsr>>16)&1) ^ ((lfsr>>11)&1);
 	lfsr=(lfsr<<1)|nrzs;
 	
-	sr=(sr>>1)|(bit_descrambled<<23);
-	sr=sr&0xffffff;
+	sr=(sr>>1)|(bit_descrambled<<31);
 
-	if ( ((sr&0xffffff)==0xd42d4b) ) { // FIXME 3 or 4 bytes?
+	if ( ((sr&0xffffffff)==0x2bd42d4b) ) { // FIXME 3 or 4 bytes?
 		//printf("######################### SYNC\n");
+		synced=1;
 		sr_cnt=0;
 		rdata[0]=sr&0xff;
 		rdata[1]=(sr>>8)&0xff;
-		byte_cnt=2;
+		rdata[2]=(sr>>16)&0xff;
+		byte_cnt=3;
 	}
 	
 	if (sr_cnt==0) {
 		if (byte_cnt<(int)sizeof(rdata)) {
-			rdata[byte_cnt]=(sr>>16)&0xff;
+			rdata[byte_cnt]=(sr>>24)&0xff;
 		}
 		//printf(" %i %02x\n",byte_cnt,rdata[byte_cnt]);
 		byte_cnt++;
@@ -119,9 +371,10 @@ whb_demod::whb_demod(decoder *_dec, int _spb) : demodulator( _dec)
 	spb=_spb;	
 	timeout_cnt=0;
 	reset();
-	iir=new iir2(3.0/spb); // Pulse filter
-	iir_avg=new iir2(0.002/spb); // Phase discriminator filter
+	iir=new iir2(2.0/spb); // Pulse filter
+	iir_avg=new iir2(0.0025/spb); // Phase discriminator filter
 	printf("WHB: Samples per bit: %i\n",spb);
+	last_dev=0;
 }
 //-------------------------------------------------------------------------
 void whb_demod::reset(void)
@@ -133,13 +386,13 @@ void whb_demod::reset(void)
 	step=last_peak=0;
 }
 //-------------------------------------------------------------------------
+//#define DBG_DUMP
+#if DBG_DUMP
 // More debugging
 static FILE *fx=NULL;
 static FILE *fy=NULL;
 static int fc=0;
-int last_dev=0;
-static int ld=0;
-
+#endif
 int whb_demod::demod(int thresh, int pwr, int index, int16_t *iq)
 {
 	int triggered=0;
@@ -155,57 +408,64 @@ int whb_demod::demod(int thresh, int pwr, int index, int16_t *iq)
 	if (timeout_cnt) {
 		triggered++;
 		int dev;
-		dev=fm_dev(iq[0],iq[1],last_i,last_q);
-		int x=dev;
-		dev=fabs(dev-last_dev); // Calc FM deviation difference -> phase
-		last_dev=x;
-		ld=iir->step(dev); // smooth it a bit
-		avg_of=iir_avg->step(1.5*ld); // minimum phase shift
+
+		/* Shaped PSK of AX5031 causes hard drop at phase changes for fm_dev_nrzs()
+		   -> detected minima are 0s, fillup with 1s since last 0
+		*/
+		dev=fm_dev_nrzs(iq[0],iq[1],last_i,last_q);		
+		dev=iir->step(dev); // reduce noise
+		if (!dec->has_sync())
+			avg_of=iir_avg->step(0.5*dev); // decision value for phase change
 
 		int bit=0;
-		timeout_cnt--;
-		
-		dev=ld;
+		timeout_cnt--;	       
 
 		int tdiff=step-last_peak;
-		int tdiff_mod=tdiff%spb;
 
-		if (dev>avg_of && // phase shift occured
-		    (tdiff>spb/2) && // far away from last peak
-		    ((tdiff_mod<spb/4) || (tdiff_mod>(3*spb/4))) ) { // falling into bit period
+		// Phase change?
+		if (dev<avg_of && 
+		    dev>last_dev &&
+		    (tdiff>3*spb/4)  ) {
 			bit=avg_of;
-			int bit0=(tdiff+spb/2)/spb;
-			for(int n=1;n<bit0;n++)
-				dec->store_bit(1);
 			dec->store_bit(0);
+			bitcnt++;
+			int bit0=(tdiff+spb/2)/spb;
+			for(int n=1;n<bit0;n++) {
+				dec->store_bit(1);
+				bitcnt++;
+			}
 			last_peak=step;
-			//printf("%i %i %i\n",fc,tdiff,bit0);
 		}
-		
-#if 0
+		last_dev=dev;
+
+		if (dec->has_sync())
+			rssi+=(iq[0]*iq[0]+iq[1]*iq[1]); 
+
+#ifdef DBG_DUMP
+		//  plot "blub" using 1:2 with lines,"blub" using 1:3 with boxes
 		if (!fx)
 			fx=fopen("blub","w");
 		if (!fy)
 			fy=fopen("blub1","w");
 		if (fx)
-			fprintf(fx,"%i %i %i %i\n",fc,dev, bit, tdiff_mod*10);
-		if (fy)
-			fprintf(fy,"%i %i\n",fc,(bit?dmax:dmin));
+			fprintf(fx,"%i %i %i %i\n",fc,dev, bit, tdiff_mod*10);		
 		fc++;
 #endif
 		
 		if (!timeout_cnt) {
 			// Flush descrambler
-			for(int n=0;n<16;n++)
-				dec->store_bit(0);
-			dec->flush(0,offset); // no rssi for now
+			if (dec->has_sync()) {
+				for(int n=0;n<16;n++)
+					dec->store_bit(0);
+				dec->flush(10*log10(1+rssi/4000),offset); // scale to rougly match with TFA_1-RSSI
+			}
 			reset();
+			rssi=0;
 		}
 	}
 	last_i=iq[0];
 	last_q=iq[1];
 
-	last_ld=ld;
 	step++;
 	return triggered;
 }

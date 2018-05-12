@@ -8,33 +8,46 @@ tfrec-supported sensors overview (TFA, LaCrosse, etc.)
 #) Success reported by users
 X) Probably never supported
 
-            Type Temp1 Temp2 Humid    ID          LCD Baudrate  Mod      Sync   Period Init-Msg   Notes
-30.3180.IT  TFA_1  X     -     X    Unique 15bit   X   38400    FM-NRZS  2d d4  10s    b26-00-56
-30.3181.IT  TFA_1  X     -     -    Unique 15bit   X   38400    FM-NRZS  2d d4  10s    b26-00-56  External sensor
-30.3199.IT  TFA_1  X     -     -    Unique 15bit   X   38400    FM-NRZS  2d d4  10s    ?          Pool sensor
+            Type Temp1 Temp2 Humid    ID          LCD Baudrate  Mod      Sync      Period Init-Msg   Notes
+30.3180.IT  TFA_1  X     -     X    Unique 15bit   X   38400    FM-NRZS  2d d4     10s    b26-00-56
+30.3181.IT  TFA_1  X     -     -    Unique 15bit   X   38400    FM-NRZS  2d d4     10s    b26-00-56  External sensor
+30.3199.IT  TFA_1  X     -     -    Unique 15bit   X   38400    FM-NRZS  2d d4     10s      ?        Pool sensor
 
-30.3143.IT  TFA_2  X     X     -    Random 6bit    X   17240    FM-NRZ   2d d4  4s     301        External sensor
-30.3144.IT  TFA_2  X     -     X    Random 6bit    X   17240    FM-NRZ   2d d4  4s     302
-30.3146.IT* TFA_2  X     -     -    Random 6bit    -   17240    FM-NRZ   2d d4  4s     ?
-30.3147.IT# TFA_2  X     -     -    Random 6bit    -   17240    FM-NRZ   2d d4  4s     ?
-30.3159.IT# TFA_2  X     -     -    Random 6bit    -   17240    FM-NRZ   2d d4  4s     ?
+30.3143.IT  TFA_2  X     X     -    Random 6bit    X   17240    FM-NRZ   2d d4     4s     301        External sensor
+30.3144.IT  TFA_2  X     -     X    Random 6bit    X   17240    FM-NRZ   2d d4     4s     302
+30.3146.IT* TFA_2  X     -     -    Random 6bit    -   17240    FM-NRZ   2d d4     4s       -
+30.3147.IT# TFA_2  X     -     -    Random 6bit    -   17240    FM-NRZ   2d d4     4s       -
+30.3159.IT# TFA_2  X     -     -    Random 6bit    -   17240    FM-NRZ   2d d4     4s       -
 
-30.3155.WD  TFA_3  X     -     X    Random 6bit    X    9600    FM-NRZ   2d d4  4s     p32
-30.3156.WD# TFA_3  X     -     -    Random 6bit    -    9600    FM-NRZ   2d d4  4s     ?
+30.3155.WD  TFA_3  X     -     X    Random 6bit    X    9600    FM-NRZ   2d d4     4s     p32
+30.3156.WD# TFA_3  X     -     -    Random 6bit    -    9600    FM-NRZ   2d d4     4s       -
 
-30.3306.02X TFA_WHP -	 -     -    none   	   -	~4000	FM-NRZ	 ea 44	  -      -	Rain sensor, simple mode
-30.3306.02  TFA_WHD x	 -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b -      -	Rain sensor, WeatherHub
+30.3303.02  TFA_WHB X    -     X    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  420s?    ?	     WeatherHub temp/humidity sensor
+30.3305.02  TFA_WHB X    -     X    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  420s+  P58-r19    WeatherHub temp/humidity/wetness sensor
+30.3306.02X TFA_WHP -	 -     -    none   	   -	~4000	FM-NRZ	 (ea 44)   -        -	     WeatherHub rain sensor, simple mode
+30.3306.02  TFA_WHB X	 -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  7200s+   -	     WeatherHub rain sensor
+30.3307.02  TFA_WHB -	 -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  420s     -	     WeatherHub wind sensor
+30.3311.02  TFA_WHB -    -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  21600s+  -	     WeatherHub door sensor
 
 Notes:
 
 30.3181/Temp1, 30.3143/Temp2: External temperature sensor (NTC 10k @ 25 degC)
 
-30.3306.02:
-The rain sensor ("WeatherHub") has two transmission modes:
-- 16 fixed content packets (NRZ) with 5 bytes per pulse with zig-zagged center frequency per telegram
+30.3305 (WeatherHub wetness sensor)
+(+) value changes for temperature/humidity trigger message after 60s, wetness events sends immediately,
+    otherwise messages are repeated every 420s.
+
+30.3306.02 (WeatherHub door sensor):
+... has two transmission modes:
+- 16 fixed content packets (NRZ) with 5 bytes per pulse with zig-zagged center frequency per telegram (not supported)
 - 2 packets in PSK/NRZS/G3RUH with 41 bytes each, containing ID, values, etc.
 - 2.5ml/pulse @ area 100cm^2 -> 250ml/m^2 = 0.25mm/m^2 per pulse
-- Temperature sensor not very precise
+- Internal temperature sensor is not very precise
+(+) Messages are repeated every 2h without rains pulses
+
+30.3311.02 (WeatherHub door sensor):
+- State open (0): magnet not near sensor
+(+) If no open/close events occur, messages are repeated every 6h (21600s)
 
 -----------------------------------------------------------------------------
 

@@ -20,7 +20,7 @@ using std::string;
 
 class engine {
   public:
-	engine(int device, uint32_t freq, int gain, fsk_demod *fsk, int dbg, int dmpmode, char *dumpfile);
+	engine(int device, uint32_t freq, int gain, int filter, fsk_demod *fsk, int dbg, int dmpmode, char *dumpfile);
 	~engine(void);
 	void run(int timeout);
 	

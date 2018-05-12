@@ -87,6 +87,35 @@ static int16_t dec_filter_taps1[DEC_TAP_NUM1] =
   -1087
 };
 
+// 90% wider filter
+static int16_t dec_filter_taps1w[DEC_TAP_NUM1] = 
+{
+/*
+	0..80Hz @ 1, Ripple 2dB
+	144...384Hz@0, att -35dB
+*/
+	546,
+	451,
+	-317,
+	-1844,
+	-3198,
+	-2817,
+	494,
+	6469,
+	13074,
+	17421,
+	17421,
+	13074,
+	6469,
+	494,
+	-2817,
+	-3198,
+	-1844,
+	-317,
+	451,
+	546
+};
+
 static int16_t dec_filter_taps2[DEC_TAP_NUM2] = 
 {
 	// 0..48@4, 160-384@-36, 8taps
@@ -98,6 +127,19 @@ static int16_t dec_filter_taps2[DEC_TAP_NUM2] =
   11036,
   6339,
   2443
+};
+// 30% wider filter
+static int16_t dec_filter_taps2w[DEC_TAP_NUM2] = 
+{
+	// 0..64@4, 180-384@-36, 8taps
+	2121,
+	6697,
+	12736,
+	17117,
+	17117,
+	12736,
+	6697,
+	2121,
 };
 
 decimate::decimate(void) 
@@ -127,11 +169,14 @@ decimate::~decimate(void)
 8                                   x x-X X
  */
 // Data: IQ with int16_t (-> step 2 for each sample)
-int decimate::process2x(int16_t *data, int length)
+int decimate::process2x(int16_t *data, int length, int type)
 {
 	int shift=16;
 	int16_t t0[DEC_TAP_NUM1];
 	int16_t *taps=dec_filter_taps1;
+	if (type)
+		taps=dec_filter_taps1w;
+	
 	for(int i=0;i<DEC_TAP_NUM1;i++) {
 		t0[i]=hist0[i];
 	}
@@ -211,8 +256,8 @@ int downconvert::process_iq(int16_t *data_iq, int len, int filter_type)
 		len=len>>1;
 	}
 #endif
-	dec_i[passes-1].process2x(data_iq, len);
-	dec_q[passes-1].process2x(data_iq+1, len);
+	dec_i[passes-1].process2x(data_iq, len, ft);
+	dec_q[passes-1].process2x(data_iq+1, len, ft);
 	len=len>>1;
 
 	return len;

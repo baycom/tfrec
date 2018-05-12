@@ -42,5 +42,6 @@ class tfa2_demod: public demodulator {
 	int last_bit;
 	int rssi;
 	iir2 *iir;
+	double est_spb;
 };
 #endif
