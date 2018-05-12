@@ -1,3 +1,4 @@
+# Makefile for Raspi2 and Zero
 PACKAGES= librtlsdr
 
 CXX=g++
@@ -7,7 +8,7 @@ DEFINES=
 PKG_INCLUDES= $(shell pkg-config --cflags $(PACKAGES))
 PKG_LIBS= $(shell pkg-config --libs $(PACKAGES))
 
-CXXFLAGS=-O3 $(PROFILING) -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -ftree-vectorize -ffast-math \
+CXXFLAGS=-O3 $(PROFILING) -mfpu=vfp -march=armv6 -mfloat-abi=hard -ftree-vectorize -ffast-math \
 	      -std=c++0x -Wall \
 	      -Wno-unused-function  -Wno-unused-variable -Wno-unused-but-set-variable \
 	      -Wno-write-strings
