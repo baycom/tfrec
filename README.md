@@ -151,11 +151,11 @@ Other useful options:
 - -m <mode>: If 1, store data and only execute one handler for each ID at exit (use with -w)
 - -W: Use wider filter (+-80kHz vs +-44kHz), tolerates more frequency offset, but is less sensitive
 - -T <type>: Enable individual sensor types, bitmask ORing the following choices as hex value:
-  -		1: TFA_1 (KlimaLoggPro) 
-  -		2: TFA_2 (17240bit/s)
-  -		4: TFA_3 (9600bit/s)
-  -             8: TX22 (8842bit/s)          NOT ENABLED BY DEFAULT!
-  -            20: WeatherHub (6000bit/s)    NOT ENABLED BY DEFAULT!
+  - 1: TFA_1 (KlimaLoggPro) 
+  - 2: TFA_2 (17240bit/s)
+  - 4: TFA_3 (9600bit/s)
+  - 8: TX22 (8842bit/s)          NOT ENABLED BY DEFAULT!
+  - 20: WeatherHub (6000bit/s)    NOT ENABLED BY DEFAULT!
   Example: "-T 2a" enables TFA_2 (2), TX22 (8) and WeatherHub (20)
 - -t <trigger>: Manually set trigger level (usually 200-1000). If 0, the level is adjusted
                 automatically (default)
@@ -175,12 +175,13 @@ the following scheme:
 - a = type 1 (17240baud types), 2 (9600 baud types), 3 (TX22)
 - b = static value (0 for TX22, usually 9 for others)
 - cc = random ID
-- d = 0 (internal temperature sensor)
-  d = 1 (external temperature sensor for 3143)
-  d = 1 only humidity (TX22)
-  d = 2 rain counter as temperature value (TX22)
-  d = 3 speed as temperature in m/s, direction as humidity (TX22)
-  d = 4 gust speed as temperature in m/s (TX22)
+- d = subtype
+  - d = 0 (internal temperature sensor)
+  - d = 1 (external temperature sensor for 3143)
+  - d = 1 only humidity (TX22)
+  - d = 2 rain counter as temperature value (TX22)
+  - d = 3 speed as temperature in m/s, direction as humidity (TX22)
+  - d = 4 gust speed as temperature in m/s (TX22)
 
 The output format for the handler is identical to the other sensors. The
 sequence counter is set to 0. If the sensor does not support humidity, it is
@@ -191,7 +192,7 @@ of its subsystems.
 
 The debug output also shows the frequency offset like this:
 
-ID 20009900 +17.2 47 12 12 RSSI 83 Offset 11kHz
+	ID 20009900 +17.2 47 12 12 RSSI 83 Offset 11kHz
 
 This indicates that the real frequency is actually 11kHz below the center
 frequency. About +-30kHz are tolerated with decreasing sensitivity at the
@@ -213,29 +214,34 @@ at the temperature and humidity values:
 
 IIIIIIIIIIIIT
 
-I: 6 Byte ID, T: Type (4bit)
-T=0: temperature, humidity (0 if not available)
-T=2: Rain sensor: tempval=rain-counter, hum=time in s since last pulse
-T=3: Wind sensor: tempval=speed (m/s), hum=direction (degree)
-T=4: Wind sensor: tempval=gust speed (m/s)
-T=5: Door/water sensor: tempval=state (1=open/wet), hum=time in s since last event (only door sensor)
+- I: 6 Byte ID, T: Type (4bit)
+- Subtype
+  - T=0: temperature, humidity (0 if not available)
+  - T=2: Rain sensor: tempval=rain-counter, hum=time in s since last pulse
+  - T=3: Wind sensor: tempval=speed (m/s), hum=direction (degree)
+  - T=4: Wind sensor: tempval=gust speed (m/s)
+  - T=5: Door/water sensor: tempval=state (1=open/wet), hum=time in s since last event (only door sensor)
 
 Thus, some sensor types deliver two output messages in one go, see the following examples:
 
 Wind sensor with ID 0b3d9ddeeabc:
 
+```
 0b3d9ddeeabc2 +0.7 270 950 0 92 0 1525996300    -> 2=Wind 0.7m/s from west (270deg)
 0b3d9ddeeabc3 +5.8 0 950 0 92 0 1525996300      -> 3=Gust 5.8m/s
+```
 
 Temperature/Humidity/Wetness sensor with ID 0469fe50dabc:
-
+```
 0469fe50dabc0 +21.3 51 16394 0 90 0 1525979222  -> 0= Temp +21.3, humidity 51%
 0469fe50dabc5 +1.0 0 16394 0 90 0 1525979222    -> 5= State=1 (wet)
+```
 
 Rain sensor with ID 0833c2708abc (0.25mm/m^2 rain per count)
-
+```
 0833c2708abc2 +9.0 774 10 0 92 0 1525998514   -> 2= Counter 9, last event 774s ago
 0833c2708abc0 +21.0 0 10 0 92 0 1525998514    -> 0= Temp 21.0
+```
 
 Some sensors (rain, wind, door) send a history of previous values. This history is
 currently just internally decoded but not used. You can see if with the "-DD" option.
