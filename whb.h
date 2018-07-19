@@ -24,8 +24,6 @@ class whb_decoder: public decoder
 	
 	uint32_t sr;
         int sr_cnt;
-        int byte_cnt;
-        uint8_t rdata[64];
         int snum;
 	crc32 *crc;
 
@@ -38,12 +36,12 @@ class whb_decoder: public decoder
 
 class whb_demod: public demodulator {
  public:
-	whb_demod(decoder *_dec, int spb);
+	whb_demod(decoder *_dec, double spb);
 	void reset(void);
 	int demod(int thresh, int pwr, int index, int16_t *iq);
 
  private:
-	int spb;
+	double spb;
 	int bitcnt;
 	int offset;
 	int timeout_cnt;

@@ -49,8 +49,6 @@ Telegram format
            2: rain (12bit cnt), 3: wind (4bit * 22.5deg, 8bit speed 0.1*m/s), 4: gust (12bit 0.1*m/s)
 
 */
-
-
 //-------------------------------------------------------------------------
 tfa2_decoder::tfa2_decoder(sensor_e _type) : decoder(_type)
 {
@@ -80,7 +78,7 @@ void tfa2_decoder::flush_tx22(int rssi, int offset)
 			printf("#%03i %u  ",snum++,(uint32_t)time(0));
 			for(int n=0;n<byte_cnt;n++)
 				printf("%02x ",rdata[n]);
-			printf("                      ");
+			printf("      ");
 		}
 		if ((rdata[2]>>4)!=0xa)
 			goto bad;
@@ -101,7 +99,6 @@ void tfa2_decoder::flush_tx22(int rssi, int offset)
 				
 		for(int n=0;n<num;n++) {
 			int t=rdata[4+n*2]>>4;
-
 
 			switch (t) {
 			case 0:  { // Temp
@@ -157,7 +154,20 @@ void tfa2_decoder::flush_tx22(int rssi, int offset)
 		sd.ts=time(0);
 		
 		int new_id=(type<<28)|(id<<4);
-
+		if (dbg) {
+			printf("TX22 ID %x, ", new_id);
+			if (have_temp)
+				printf("temp %g, ", temp);
+			if (have_hum)
+				printf("hum %g, ", hum);
+			if (have_rain)
+				printf("rain %g, ", rain);
+			if (have_wind)
+				printf("speed %g, dir %g, ", wspeed, wdir);
+			if (have_gust)
+				printf("gust %g, ",  wgust);
+			printf("RSSI %i, offset %.0lfkHz\n", rssi, -1536.0*offset/131072);
+		}
 		if (have_temp) {
 			sd.id=new_id;
 			sd.temp=temp;
@@ -183,9 +193,6 @@ void tfa2_decoder::flush_tx22(int rssi, int offset)
 			store_data(sd);
 		}
 
-		if (dbg>1)
-			printf("TX22 ID %x, temp %g (%i), hum %g (%i), rain %g (%i), w_speed %g (%i), w_dir %g, w_gust %g (%i)\n",
-			       new_id, temp, have_temp, hum, have_hum, rain, have_rain, wspeed, have_wind, wdir, wgust, have_gust);
 		sr_cnt=-1;
 		sr=0;
 		byte_cnt=0;
@@ -304,13 +311,13 @@ void tfa2_decoder::store_bit(int bit)
 		sr_cnt=(sr_cnt+1)&7;
 }
 //-------------------------------------------------------------------------
-tfa2_demod::tfa2_demod(decoder *_dec, int _spb, double _iir_fac) : demodulator( _dec)
+tfa2_demod::tfa2_demod(decoder *_dec, double _spb, double _iir_fac) : demodulator( _dec)
 {
 	spb=_spb;	
 	timeout_cnt=0;
 	reset();
 	iir=new iir2(_iir_fac/spb); // iir_fac=0.5 -> Lowpass at bit frequency (01-pattern)
-	printf("type 0x%x: Samples per bit: %i\n", _dec->get_type(), spb);
+	printf("type 0x%x: Samples per bit: %.1f\n", _dec->get_type(), spb);
 }
 //-------------------------------------------------------------------------
 void tfa2_demod::reset(void)
@@ -324,7 +331,7 @@ void tfa2_demod::reset(void)
 	est_spb=spb;
 }
 //-------------------------------------------------------------------------
-#define DBG_DUMP
+//#define DBG_DUMP
 #ifdef DBG_DUMP
 // More debugging
 FILE *fx=NULL;
@@ -383,18 +390,12 @@ int tfa2_demod::demod(int thresh, int pwr, int index, int16_t *iq)
 				bitcnt++;
 				int tdiff=index-last_bit_idx;
 				// Determine number of bits depending on time between edges
-				if (tdiff>spb/4 && tdiff<16*spb) {
-					#if 0
-					if (bitcnt>2 && bitcnt<16) {
-						est_spb=(3*est_spb + (tdiff)/2)/4;
-						//printf("%i EST %.1f %i\n",fc, est_spb,tdiff);
-					}
-					#endif
+				if (tdiff>spb/4 && tdiff<32*spb) {
 					//printf("%i %i %i \n",bit,last_bit,(index-last_bit_idx)/2);
-					int numbits=(index-last_bit_idx)/2;
-					numbits=(numbits+est_spb/2)/est_spb;
-					if (numbits<16) { // Sanity
-						//printf("   %i %i %i %i nb %i\n",bit,last_bit,dev,(index-last_bit_idx)/2,numbits);
+					int bit_diff=(index-last_bit_idx)/2;
+					int numbits=(bit_diff+ (est_spb/2))/est_spb;
+					if ( numbits<32) { // Sanity
+						//printf("   %i %i %i %i nb %i %.1f\n",  bit,last_bit,dev,(index-last_bit_idx)/2,numbits,fnumbits);
 						for(int n=1;n<numbits;n++) {
 							dec->store_bit(last_bit);
 						}

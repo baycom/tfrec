@@ -43,11 +43,14 @@ class decoder
 	virtual int has_sync(void) {return synced;};
 	int count(void) {return data.size();}
 	sensor_e get_type(void) {return type;}
+	virtual void store_bytes(uint8_t *d, int len);
  protected:
 	int dbg;
 	int bad;
 	int synced;
 	sensor_e type;
+	uint8_t rdata[256];
+	int byte_cnt;
  private:
 
 	char *handler;

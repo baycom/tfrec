@@ -5,7 +5,7 @@ SEO Keywords: TFA KlimaLogg LaCrosse decoder SDR WeatherHub sensor Linux :)
 
 This tool uses a RTL2832-based SDR stick to decode data sent by the
 KlimaLogg Pro (and recently some other) temperature sensors made by TFA
-Dostmann (http://tfa-dostmann.de) or other LaCrosse-compatible sensors.
+Dostmann (http://tfa-dostmann.de) or other Technoline/LaCrosse-compatible sensors.
 
 Runs on Linux (tested on x86 and ARM/Raspberry PI3) and MacOS. Required HW
 is a RTL2832-based DVB-T-stick, preferrably with a R820T-tuner. 
@@ -17,7 +17,7 @@ Supported sensors are (see sensors.txt for more details):
 - NRZS/38400baud: 30.3180.IT, 30.3181.IT and probably 30.3199 (pool sensor)
 - NRZ/9600baud:   30.3155.WD, 30.3156.WD
 - NRZ/17240baud:  30.3143.IT, 30.3144.IT, 30.3147.IT, 30.3157.IT, 30.3159.IT and probably 30.3146.IT
-- NRZ/8842baud:   TX22
+- NRZ/8842baud:   Technoline TX22
 - NRZS/6000baud:  WeatherHub sensors (TFA 30.3303.02, 30.3305.02, 30.3306.02, 30.3307.02 30.3311.02,
                   probably others like Technoline Mobile Alerts)
 
@@ -51,7 +51,7 @@ GPLv2   http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 ## Installation
 
 For x86/x86_64/MacOS simply type make. For RasPI3 use "make -f
-Makefile.arm", for RasPI2 "make -f Makefile.raspi2". For other
+Makefile.arm", for RasPI 2 or Zero  "make -f Makefile.raspi2". For other
 architectures you need to adjust the makefile flags.
 
 The resulting executable is "tfrec". All options can be seen with "tfrec -h".
@@ -188,7 +188,7 @@ sequence counter is set to 0. If the sensor does not support humidity, it is
 set to 0.
 
 Please note that the TX22 system can deliver multiple outputs for each
-of its subsystems.
+of its subsystems. With -D, only the actually sent values are printed.
 
 The debug output also shows the frequency offset like this:
 
@@ -268,10 +268,10 @@ currently just internally decoded but not used. You can see if with the "-DD" op
  At strong RSSI: Reduce gain (manual gain), reduce strong RF sources nearby
  At weak RSSI:   Use other antenna position
 
- My 3144 sensor has a frequency offset and may require a slightly
- different frequency for reliable reception: Try with '-f 868225', use
- "-W" for a wider filter or look at the offset value in the debug
- output.
+ My 3144/TX22 sensors have a frequency offset and may require a slightly
+ different frequency for reliable reception: Either try with '-f 868225' or use
+ "-W" for a wider filter. You can also look at the offset value in the debug
+ output for correctly received messages and use that as a correction value.
 
 - Unknown IDs
 

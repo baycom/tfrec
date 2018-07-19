@@ -33,8 +33,6 @@ fsk_demod::fsk_demod(vector<demodulator*> *_demods, int _thresh, int _dbg)
 //-------------------------------------------------------------------------
 void fsk_demod::process(int16_t *data_iq, int len)
 {
-	int max_val=0;
-	int last_dev=0;
 	int triggered=0;
 	runs++;
 	for(int n=0;n<demods->size();n++) {

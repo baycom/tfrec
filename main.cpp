@@ -160,7 +160,7 @@ int main(int argc, char **argv)
 		printf("Registering demod for TX22, 8842 bit/s\n");
 		decoder *tx22_dec=new tfa2_decoder(TX22);
 		tx22_dec->set_params(exec, mode, debug);
-		demods.push_back(new tfa2_demod( tx22_dec, (1536000/4.0)/8842));
+		demods.push_back(new tfa2_demod( tx22_dec, (1536000/4.0)/8842,0.5));
 	}
 	/*
 	if (types&(1<<TFA_WHP)) {

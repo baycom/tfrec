@@ -366,14 +366,14 @@ void whb_decoder::store_bit(int bit)
 		sr_cnt=(sr_cnt+1)&7;
 }
 //-------------------------------------------------------------------------
-whb_demod::whb_demod(decoder *_dec, int _spb) : demodulator( _dec)
+whb_demod::whb_demod(decoder *_dec, double _spb) : demodulator( _dec)
 {
 	spb=_spb;	
 	timeout_cnt=0;
 	reset();
 	iir=new iir2(2.0/spb); // Pulse filter
 	iir_avg=new iir2(0.0025/spb); // Phase discriminator filter
-	printf("WHB: Samples per bit: %i\n",spb);
+	printf("WHB: Samples per bit: %.1f\n",spb);
 	last_dev=0;
 }
 //-------------------------------------------------------------------------

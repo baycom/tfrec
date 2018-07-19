@@ -20,20 +20,18 @@ class tfa2_decoder: public decoder
 	int invert;
 	uint32_t sr;
         int sr_cnt;
-        int byte_cnt;
-        uint8_t rdata[32];
         int snum;
 	crc8 *crc;
 };
 
 class tfa2_demod: public demodulator {
  public:
-	tfa2_demod(decoder *_dec, int spb, double iir_fac=0.5);
+	tfa2_demod(decoder *_dec, double spb, double iir_fac=0.5);
 	void reset(void);
 	int demod(int thresh, int pwr, int index, int16_t *iq);
 
  private:
-	int spb;
+	double spb;
 	int bitcnt;
 	int dmin,dmax;
 	int offset;

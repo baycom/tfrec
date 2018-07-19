@@ -16,8 +16,6 @@ class tfa1_decoder: public decoder
  private:
 	uint32_t sr;
         int sr_cnt;
-        int byte_cnt;
-        uint8_t rdata[32];
         int snum;
 	crc8 *crc;
 };

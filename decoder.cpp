@@ -29,6 +29,14 @@ void decoder::store_bit(int bit)
 {
 }
 //-------------------------------------------------------------------------
+// Shortcut for testing
+void decoder::store_bytes(uint8_t *d, int len)
+{
+	memcpy(rdata, d, len);
+	byte_cnt=len;
+	synced=1;
+}
+//-------------------------------------------------------------------------
 void decoder::flush(int rssi, int offset)
 {
 }
@@ -62,7 +70,7 @@ void decoder::execute_handler(sensordata_t &d)
 		if (type!=TFA_WHB) {
 			nid=d.id|(d.type<<24);
 			//                                     t   h  s  a  r  f ts
-			snprintf(cmd,sizeof(cmd),"%s %04llx %+.1f %g %i %i %i %i %i",
+			snprintf(cmd,sizeof(cmd),"%s %04llx %+.1f %g %i %i %i %i %li",
 				 handler,
 				 nid, d.temp, d.humidity,
 				 d.sequence, d.alarm, d.rssi,
@@ -72,7 +80,7 @@ void decoder::execute_handler(sensordata_t &d)
 		else { // WHB has really long IDs...
 			nid=d.id;
 			//                                     t   h  s  a  r  f ts
-			snprintf(cmd,sizeof(cmd),"%s %013llx %+.1f %g %i %i %i %i %i",
+			snprintf(cmd,sizeof(cmd),"%s %013llx %+.1f %g %i %i %i %i %li",
 				 handler,
 				 nid, d.temp, d.humidity,
 				 d.sequence, d.alarm, d.rssi,
