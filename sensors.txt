@@ -28,6 +28,8 @@ X) Probably never supported
 30.3306.02  TFA_WHB X	 -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  7200s+   -	     WeatherHub rain sensor
 30.3307.02  TFA_WHB -	 -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  420s     -	     WeatherHub wind sensor
 30.3311.02  TFA_WHB -    -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  21600s+  -	     WeatherHub door sensor
+35.1147.01  TFA_WHB X    X     2    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub station, indoor + outdoor sensor
+30.3060.01  TFA_WHB X    +3    4    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub station, indoor + 3*outdoor sensors
 
 Notes:
 
@@ -49,6 +51,12 @@ Notes:
 - State open (0): magnet not near sensor
 (+) If no open/close events occur, messages are repeated every 6h (21600s)
 
+35.1147.01 (station, "Coloris", uses external sensor 30.3224.02.IT)
+- Sends internal and outdoor TH values
+
+30.3060.01 (station, "Klima@Home", uses 3* external sensor KlimaLoggPro 30.3180.IT)
+- Sends internal and three outdoor TH values
+
 -----------------------------------------------------------------------------
 
 Sensor vs. station zoo (according to TFA website chaos + own googling, not verified)
@@ -56,6 +64,7 @@ Sensor vs. station zoo (according to TFA website chaos + own googling, not verif
 Stations for TFA1-sensors ("KlimaLogg Pro")
 	30.3039.IT
 	30.3053.IT
+	30.3060.01 ("Klima@Home")
 
 Stations for TFA2-sensors (type 1)
 	30.3009.IT 

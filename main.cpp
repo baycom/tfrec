@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <string.h>
 
 #include "engine.h"
 
@@ -16,7 +17,40 @@
 #include "tfa2.h"
 #include "whb.h"
 #include "crc32.h"
-
+//-------------------------------------------------------------------------
+/* Read hex dump files (xx xx xx ...), each message in a line
+   Allows test decoding of already demodulated mmessages
+ */
+void read_raw_msgs(vector<demodulator*> *demods, char *test_file)
+{
+	FILE *fd=fopen(test_file,"r");
+	if (!fd) {
+		perror("Can't open message file");
+		exit(-1);
+	}
+	char buf[1024];
+	while(fgets(buf,sizeof(buf),fd)) {
+		// Skip comment lines
+		if (buf[0]=='#')
+			continue;
+		unsigned char dbuf[512];
+		// convertdump line to binary
+		int len=0;
+		char *dp=buf;
+		char *x;
+		while((x=strsep(&dp, " ")) && len<sizeof(dbuf)) {
+			if (*x!=0)
+				dbuf[len++]=strtol(x, NULL, 16);
+		}
+		for(int n=0;n<demods->size();n++) {			
+			demods->at(n)->dec->store_bytes(dbuf, len);
+			demods->at(n)->dec->flush(0);
+			puts("");
+			demods->at(n)->dec->flush_storage();
+		}
+	}
+	fclose(fd);
+}
 //-------------------------------------------------------------------------
 void timeout_handler(int sig)
 {
@@ -42,6 +76,7 @@ void usage(void)
 		" -q          : Quiet, do not print message to stdout\n"
 		" -S <file>   : Save IQ-file for later debugging\n"
 		" -L <file>   : Load IQ-file instead of stick data\n"
+		" -X <file>   : Load hexdump file and decode (test mode)\n"
 		);
 	fprintf(stderr,
 		"\nBitmask values for supported types (hex): \n"
@@ -67,10 +102,11 @@ int main(int argc, char **argv)
 	int deviceindex=0;
 	int types=0x07;
 	int filter=0;
+	char *hexdump_file=NULL;
 	
 	while(1) {
 		signed char c=getopt(argc,argv,
-			      "d:Df:g:e:t:m:w:WqT:S:L:h");
+			      "d:Df:g:e:t:m:w:WqT:S:L:X:h");
 		if (c==-1)
 			break;
 		switch (c) {
@@ -117,6 +153,9 @@ int main(int argc, char **argv)
 		case 'L':
 			dumpfile=strdup(optarg);
 			dumpmode=-1;
+			break;
+		case 'X':
+			hexdump_file=strdup(optarg);
 			break;
 		case 'h':
 		default:
@@ -178,6 +217,11 @@ int main(int argc, char **argv)
 		demods.push_back(new whb_demod( whb_dec, (1536000/4.0)/6000));
 	}
 	
+	if (hexdump_file) {
+		read_raw_msgs(&demods, hexdump_file);
+		exit(0);
+	}
+		
 	fsk_demod fsk(&demods, thresh, debug);
 
 	engine e(deviceindex,freq,gain,filter,&fsk,debug,dumpmode,dumpfile);

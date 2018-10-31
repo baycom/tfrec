@@ -28,12 +28,18 @@
   for more details on the sensor payload!    
 
   ID-Mapping: Sensor-ID gets an appended nibble like TX22 (-> 6.5byte ID!)
-  ID.0: temperature, humidity (0 if not available)
+  ID.0: temperature, humidity (0 if not available) (indoor)
   ID.2: Rain sensor: tempval=rain-counter, hum=time since last pulse
   ID.3: Wind sensor: tempval=speed (m/s), hum=direction (degree)
   ID.4: Wind sensor: tempval=gust speed (m/s)
   ID.5: Door/water-sensor: tempval=state, hum=time since last event
-  
+  ID.c: temperature, humidity (outdoor, sensor #1)
+  ID.d: temperature, humidity (sensor #2)
+  ID.e: temperature, humidity (sensor #3)
+
+  Notes:
+  WHB-Type 7 (MA10410/TFA 35.1147.01) has indoor and outdoor values -> mapped to ID.0 and ID.c
+  WHB-Type 11 (TFA 30.3060.01) has indoor and 3 other sensor values -> mapped to ID.0 and ID.c to ID.e
  */
 #include <stdlib.h>
 using std::map;
@@ -42,9 +48,11 @@ map<uint32_t, uint32_t> crc_initvals = {
      // { 0x02, 0x???????? },   // Only temp
 	{ 0x03, 0xf59c5a1e}, // Temp/hum
 	{ 0x04, 0x98e1d11f}, // Temp/hum/water
+	{ 0x07, 0x3303fb1d}, // Station MA10410 (TFA 35.1147.01)
 	{ 0x08, 0x29f0f49b}, // Rain sensor (+ temp)
 	{ 0x0b, 0xe7720ae4}, // Wind sensor
 	{ 0x10, 0x62d0afc1}, // Door sensor
+	{ 0x11, 0x8cba0708}, // 4 Thermo-hygro-sensors (TFA 30.3060.01)
 };
 
 // Translates time units in seconds multiplier
@@ -160,6 +168,41 @@ void whb_decoder::decode_04(uint8_t *msg,  uint64_t id, int rssi, int offset)
 	store_data(sd);
 }
 //-------------------------------------------------------------------------
+// Station MA10410 (TFA 35.1147.01)
+void whb_decoder::decode_07(uint8_t *msg, uint64_t id, int rssi, int offset)
+{
+	uint16_t seq=BE16(msg)&0x3fff;
+	uint16_t temp[4]; // 0=indoor, 2/3: previous
+	uint16_t hum[4];
+	for(int n=0;n<4;n++) {
+		temp[n]=BE16(msg+2+4*n)&0x07ff;
+		hum[n]=BE16(msg+4+4*n)&0x0ff; 
+	}
+	if (dbg) {
+		printf("WHB/07 %llx TEMP_IN %g HUM_IN %i TEMP_OUT %g HUM_OUT %i",id, cvt_temp(temp[0]), hum[0], cvt_temp(temp[1]), hum[1]);
+		if (dbg>1)
+			printf(" PTEMP_IN %g PHUM_IN %i PTEMP_OUT %g PHUM_OUT %i", cvt_temp(temp[2]), hum[2], cvt_temp(temp[3]), hum[3]);
+		puts("");
+	}
+
+	sensordata_t sd;
+	sd.type=type;
+	sd.id=(id<<4LL); // ID.0 = indoor
+	sd.temp=cvt_temp(temp[0]);
+	sd.humidity=hum[0];
+	sd.sequence=seq;
+	sd.alarm=0;
+	sd.rssi=rssi;
+	sd.flags=0;
+	sd.ts=time(0);
+	store_data(sd);
+
+	sd.id=(id<<4LL)|0xc; // ID.c = outdoor
+	sd.temp=cvt_temp(temp[1]);
+	sd.humidity=hum[1];
+	store_data(sd);
+}
+//-------------------------------------------------------------------------
 // Rain sensor, store counter and temperature
 void whb_decoder::decode_08(uint8_t *msg, uint64_t id, int rssi, int offset)
 {
@@ -256,6 +299,45 @@ void whb_decoder::decode_10(uint8_t *msg, uint64_t id, int rssi, int offset)
 	store_data(sd);
 }
 //-------------------------------------------------------------------------
+// 4 Thermo-hygro-sensors (TFA 30.3060.01)
+void whb_decoder::decode_11(uint8_t *msg, uint64_t id, int rssi, int offset)
+{
+	uint16_t seq=BE16(msg)&0x3fff;
+	uint16_t temp[8]; // 3 = indoor, >3: previous values
+	uint16_t hum[8];
+	for(int n=0;n<8;n++) {
+		temp[n]=BE16(msg+2+4*n)&0x07ff;
+		hum[n] =BE16(msg+4+4*n)&0xff;
+	}
+
+	if (dbg) {
+		printf("WHB/11 %llx TEMP1 %g HUM1 %i TEMP2 %g HUM2 %i TEMP3 %g HUM3 %i TEMP_IN %g HUM_IN %i",
+		       id, cvt_temp(temp[0]),hum[0], cvt_temp(temp[1]),hum[1], cvt_temp(temp[2]),hum[2], cvt_temp(temp[3]),hum[3]);
+		if (dbg>1)
+			printf(" PTEMP1 %g PHUM1 %i PTEMP2 %g PHUM2 %i PTEMP3 %g PHUM3 %i PTEMP_IN %g PHUM_IN %i",
+			       cvt_temp(temp[4]),hum[4], cvt_temp(temp[5]),hum[5], cvt_temp(temp[6]),hum[6], cvt_temp(temp[7]),hum[7]);
+		puts("");
+	}
+	sensordata_t sd;
+	sd.type=type;
+	sd.id=(id<<4LL);
+	sd.temp=cvt_temp(temp[3]);
+	sd.humidity=hum[3];
+	sd.sequence=seq;
+	sd.alarm=0;
+	sd.rssi=rssi;
+	sd.flags=0;
+	sd.ts=time(0);
+	store_data(sd);
+
+	for(int n=0;n<3;n++) {
+		sd.id=(id<<4LL)|(0xc+n);
+		sd.temp=cvt_temp(temp[n]);
+		sd.humidity=hum[n];
+		store_data(sd);
+	}
+}
+//-------------------------------------------------------------------------
 void whb_decoder::flush(int rssi, int offset)
 {
 	uint32_t crc_calc=0;
@@ -299,6 +381,9 @@ void whb_decoder::flush(int rssi, int offset)
 		case 0x04:
 			decode_04(msg, id, rssi, offset);
 			break;
+		case 0x07:
+			decode_07(msg, id, rssi, offset);
+			break;
 		case 0x08:
 			decode_08(msg, id, rssi, offset);
 			break;
@@ -307,6 +392,9 @@ void whb_decoder::flush(int rssi, int offset)
 			break;
 		case 0x10:
 			decode_10(msg, id, rssi, offset);
+			break;
+		case 0x11:
+			decode_11(msg, id, rssi, offset);
 			break;
 		}
 		goto reset;

@@ -18,9 +18,11 @@ class whb_decoder: public decoder
 	double cvt_temp(uint16_t raw);
 	void decode_03(uint8_t *msg, uint64_t id, int rssi, int offset); // temp/hum
 	void decode_04(uint8_t *msg, uint64_t id, int rssi, int offset); // temp/hum/water
+	void decode_07(uint8_t *msg, uint64_t id, int rssi, int offset); // Station MA10410 (TFA 35.1147.01)
 	void decode_08(uint8_t *msg, uint64_t id, int rssi, int offset); // rain
 	void decode_0b(uint8_t *msg, uint64_t id, int rssi, int offset); // wind
 	void decode_10(uint8_t *msg, uint64_t id, int rssi, int offset); // door
+	void decode_11(uint8_t *msg, uint64_t id, int rssi, int offset); // 4 Thermo-hygro-sensors (TFA 30.3060.01)
 	
 	uint32_t sr;
         int sr_cnt;

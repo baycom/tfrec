@@ -18,7 +18,8 @@ Supported sensors are (see sensors.txt for more details):
 - NRZ/9600baud:   30.3155.WD, 30.3156.WD
 - NRZ/17240baud:  30.3143.IT, 30.3144.IT, 30.3147.IT, 30.3157.IT, 30.3159.IT and probably 30.3146.IT
 - NRZ/8842baud:   Technoline TX22
-- NRZS/6000baud:  WeatherHub sensors (TFA 30.3303.02, 30.3305.02, 30.3306.02, 30.3307.02 30.3311.02,
+- NRZS/6000baud:  WeatherHub sensors (TFA 30.3303.02, 30.3305.02, 30.3306.02, 30.3307.02 30.3311.02, 
+                  MA10410/TFA 35.1147.01, TFA 35.1147.01
                   probably others like Technoline Mobile Alerts)
 
 It is likely that the other LaCrosse-based sensors with 9600/17240baud also
@@ -216,13 +217,14 @@ IIIIIIIIIIIIT
 
 - I: 6 Byte ID, T: Type (4bit)
 - Subtype
-  - T=0: temperature, humidity (0 if not available)
+  - T=0: temperature, humidity (0 if not available), indoor values for stations with multiple sensors
   - T=2: Rain sensor: tempval=rain-counter, hum=time in s since last pulse
   - T=3: Wind sensor: tempval=speed (m/s), hum=direction (degree)
   - T=4: Wind sensor: tempval=gust speed (m/s)
   - T=5: Door/water sensor: tempval=state (1=open/wet), hum=time in s since last event (only door sensor)
-
-Thus, some sensor types deliver two output messages in one go, see the following examples:
+  - T=0xc to 0xe: temperature/humidity of extra sensors (stations
+  
+Thus, some sensor types deliver two or more output messages in one go, see the following examples:
 
 Wind sensor with ID 0b3d9ddeeabc:
 
@@ -241,6 +243,14 @@ Rain sensor with ID 0833c2708abc (0.25mm/m^2 rain per count)
 ```
 0833c2708abc2 +9.0 774 10 0 92 0 1525998514   -> 2= Counter 9, last event 774s ago
 0833c2708abc0 +21.0 0 10 0 92 0 1525998514    -> 0= Temp 21.0
+```
+
+Station ID 117addaf2ff6 with one internal and 3 external T/H sensors (TFA 30.3060.01)
+```
+117addaf2ff60 +22.0 55 1772 0 0 0 1540944521    -> 0=indoor
+117addaf2ff6c +11.6 86 1772 0 0 0 1540944521    -> c=sensor#1
+117addaf2ff6d +22.2 51 1772 0 0 0 1540944521    -> d=sensor#2
+117addaf2ff6e +18.8 62 1772 0 0 0 1540944521    -> e=sensor#3
 ```
 
 Some sensors (rain, wind, door) send a history of previous values. This history is
