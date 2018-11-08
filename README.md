@@ -1,5 +1,5 @@
 ## tfrec - A SDR tool for receiving wireless sensor data
-(c) 2017 Georg Acher & Deti Fliegl, {acher|fliegl}(at)baycom.de
+(c) 2017-2018 Georg Acher & Deti Fliegl, {acher|fliegl}(at)baycom.de
 
 SEO Keywords: TFA KlimaLogg LaCrosse decoder SDR WeatherHub sensor Linux :)
 
@@ -19,7 +19,7 @@ Supported sensors are (see sensors.txt for more details):
 - NRZ/17240baud:  30.3143.IT, 30.3144.IT, 30.3147.IT, 30.3157.IT, 30.3159.IT and probably 30.3146.IT
 - NRZ/8842baud:   Technoline TX22
 - NRZS/6000baud:  WeatherHub sensors (TFA 30.3303.02, 30.3305.02, 30.3306.02, 30.3307.02 30.3311.02, 
-                  MA10410/TFA 35.1147.01, TFA 35.1147.01
+                  MA10410/TFA 35.1147.01, TFA 35.1147.01, 30.3304.02 
                   probably others like Technoline Mobile Alerts)
 
 It is likely that the other LaCrosse-based sensors with 9600/17240baud also
@@ -38,7 +38,9 @@ GPLv2   http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 - rtl-sdr (library/headers/utilities)
 
  Debian/Ubuntu: package name 'librtlsdr-dev'
+
  Mac ports: package name 'rtl-sdr'
+
  Or download+install from https://github.com/steve-m/librtlsdr
  
  Note: Make sure that the SDR stick can be accessed. The rtl_test
@@ -157,7 +159,7 @@ Other useful options:
   - 4: TFA_3 (9600bit/s)
   - 8: TX22 (8842bit/s)          NOT ENABLED BY DEFAULT!
   - 20: WeatherHub (6000bit/s)    NOT ENABLED BY DEFAULT!
-  Example: "-T 2a" enables TFA_2 (2), TX22 (8) and WeatherHub (20)
+  - Example: "-T 2a" enables TFA_2 (2), TX22 (8) and WeatherHub (20)
 - -t <trigger>: Manually set trigger level (usually 200-1000). If 0, the level is adjusted
                 automatically (default)
 
@@ -218,11 +220,12 @@ IIIIIIIIIIIIT
 - I: 6 Byte ID, T: Type (4bit)
 - Subtype
   - T=0: temperature, humidity (0 if not available), indoor values for stations with multiple sensors
+  - T=1: External (cable) temperature sensor (WHB type 7)
   - T=2: Rain sensor: tempval=rain-counter, hum=time in s since last pulse
   - T=3: Wind sensor: tempval=speed (m/s), hum=direction (degree)
   - T=4: Wind sensor: tempval=gust speed (m/s)
   - T=5: Door/water sensor: tempval=state (1=open/wet), hum=time in s since last event (only door sensor)
-  - T=0xc to 0xe: temperature/humidity of extra sensors (stations
+  - T=0xc to 0xe: temperature/humidity of extra sensors (or stations)
   
 Thus, some sensor types deliver two or more output messages in one go, see the following examples:
 
@@ -295,11 +298,11 @@ currently just internally decoded but not used. You can see if with the "-DD" op
 
 - "Unsupported sensor type" for WeatherHub sensors
 
-There is a "secret" type specific value (CRC init) that can only be
-safely calculated with at least different 2 raw messages. I have
-determined it for 5 types (03, 04, 08, 0b and 10) and also implemented
-the value decoding just for these sensors. For other types please send
-me a few raw messages received by the -D option.
+There is a "secret" type specific value (CRC init) that can only be safely
+calculated with at least 2 *different* raw messages (3 are better). I have
+determined it for 8 types (03, 04, 06, 07, 08, 0b, 10, and 11) and also
+implemented the value decoding just for these sensors. For other types
+please send me a few raw messages received by the -D option.
 
 ## Dump save/load
 
