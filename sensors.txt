@@ -21,6 +21,7 @@ X) Probably never supported
 
 30.3155.WD  TFA_3  X     -     X    Random 6bit    X    9600    FM-NRZ   2d d4     4s     p32
 30.3156.WD# TFA_3  X     -     -    Random 6bit    -    9600    FM-NRZ   2d d4     4s       -
+30.3183.IT  TFA_3  X     -     X    ?              X    9600                                         temp/humidity sensor with display for device 30.3042.IT
 
 30.3303.02  TFA_WHB X    -     X    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  420s?    ?	     WeatherHub temp/humidity sensor
 30.3305.02  TFA_WHB X    -     X    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  420s+  P58-r19    WeatherHub temp/humidity/wetness sensor
