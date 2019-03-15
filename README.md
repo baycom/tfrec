@@ -136,8 +136,9 @@ debug output. Subtract that from 868250 if you have reception problems (see
 below).
 
 If that works, you can omit the -D. Then only successfully decoded data is
-printed. If you want to store the data, you can use the option -e <cmd>. For
-every received message <cmd> is called with the arguments
+printed. If you want to store the data, you can use the option -e
+&lt;cmd&gt;. For
+every received message &lt;cmd&gt; is called with the arguments
 
 	id temp hum seq batfail rssi timestamp
 
@@ -148,19 +149,19 @@ echo-command.
 
 Other useful options:
 
-- -g <gain>: Manual (for 820T-tuner 0...50, -1: auto gain=default)
-- -d <index or name>: Use specified stick (use -d ? to list all sticks)
-- -w <timeout>: Run for timeout seconds and exit
-- -m <mode>: If 1, store data and only execute one handler for each ID at exit (use with -w)
+- -g &lt;gain&gt;: Manual (for 820T-tuner 0...50, -1: auto gain=default)
+- -d &lt;index or name&gt;: Use specified stick (use -d ? to list all sticks)
+- -w &lt;timeout&gt;: Run for timeout seconds and exit
+- -m &lt;mode&gt;: If 1, store data and only execute one handler for each ID at exit (use with -w)
 - -W: Use wider filter (+-80kHz vs +-44kHz), tolerates more frequency offset, but is less sensitive
-- -T <type>: Enable individual sensor types, bitmask ORing the following choices as hex value:
+- -T &lt;type&gt;: Enable individual sensor types, bitmask ORing the following choices as hex value:
   - 1: TFA_1 (KlimaLoggPro) 
   - 2: TFA_2 (17240bit/s)
   - 4: TFA_3 (9600bit/s)
   - 8: TX22 (8842bit/s)          NOT ENABLED BY DEFAULT!
   - 20: WeatherHub (6000bit/s)    NOT ENABLED BY DEFAULT!
   - Example: "-T 2a" enables TFA_2 (2), TX22 (8) and WeatherHub (20)
-- -t <trigger>: Manually set trigger level (usually 200-1000). If 0, the level is adjusted
+- -t &lt;trigger&gt;: Manually set trigger level (usually 200-1000). If 0, the level is adjusted
                 automatically (default)
 
 ## Support for non-KlimaLoggPro TFA/LaCrosse sensors:
@@ -266,7 +267,7 @@ Station ID 124a42a3d8e3 with internal T/H and averaged H (TFA 30.5043.01)
 ```
 
 Some sensors (rain, wind, door) send a history of previous values. This history is
-currently just internally decoded but not used. You can see if with the "-DD" option.
+currently just internally decoded but not used. You can see it with the "-DD" option.
 
 ## Troubleshooting
 
@@ -315,8 +316,8 @@ please send me a few (different) raw messages received by the -D option.
 
 ## Dump save/load
 
-You can record an IQ dump with '-S <file>'. This file can be read instead of
-real time data with '-L <file>'.
+You can record an IQ dump with '-S &lt;file&gt;'. This file can be read instead of
+real time data with '-L &lt;file&gt;'.
 
 ## Visualisation
 
@@ -330,7 +331,7 @@ Short setup:
   -   mysql> create user 'smarthome'@'localhost' identified by 'some password';
   -   mysql> grant all privileges on smarthome.* to 'smarthome'@'localhost';
 
-- Create table with 'mysql -u smarthome -p -A smarthome < sensors.sql'
+- Create table with 'mysql -u smarthome -p -A smarthome &lt; sensors.sql'
 
 - Copy pushvals.cgi, sensors.cgi and sensors.html to a web accessible
   directory with CGI execution. Fix MySQL password in both CGIs.
