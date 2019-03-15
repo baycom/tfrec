@@ -19,7 +19,7 @@ Supported sensors are (see sensors.txt for more details):
 - NRZ/17240baud:  30.3143.IT, 30.3144.IT, 30.3147.IT, 30.3157.IT, 30.3159.IT and probably 30.3146.IT
 - NRZ/8842baud:   Technoline TX22
 - NRZS/6000baud:  WeatherHub sensors (TFA 30.3303.02, 30.3305.02, 30.3306.02, 30.3307.02 30.3311.02, 
-                  MA10410/TFA 35.1147.01, TFA 35.1147.01, 30.3304.02 
+                  MA10410/TFA 35.1147.01, TFA 35.1147.01, 30.3304.02, 30.5043.01 
                   probably others like Technoline Mobile Alerts)
 
 It is likely that the other LaCrosse-based sensors with 9600/17240baud also
@@ -254,6 +254,15 @@ Station ID 117addaf2ff6 with one internal and 3 external T/H sensors (TFA 30.306
 117addaf2ff6c +11.6 86 1772 0 0 0 1540944521    -> c=sensor#1
 117addaf2ff6d +22.2 51 1772 0 0 0 1540944521    -> d=sensor#2
 117addaf2ff6e +18.8 62 1772 0 0 0 1540944521    -> e=sensor#3
+```
+
+Station ID 124a42a3d8e3 with internal T/H and averaged H (TFA 30.5043.01)
+```
+124a42a3d8e30 +21.5 52 1263 0 0 0 1552610966    -> 0= indoor temp/hum.
+124a42a3d8e31 +0.0 51 1263 0 0 0 1552610966     -> 1= 3h average hum.
+124a42a3d8e3c +0.0 53 1263 0 0 0 1552610966     -> c= 24h average hum.
+124a42a3d8e3d +0.0 51 1263 0 0 0 1552610966     -> d= 7d average hum.
+124a42a3d8e3e +0.0 0 1263 0 0 0 1552610966      -> e= 30d average hum.
 ```
 
 Some sensors (rain, wind, door) send a history of previous values. This history is

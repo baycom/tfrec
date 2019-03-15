@@ -32,6 +32,7 @@ X) Probably never supported
 35.1147.01  TFA_WHB X    X     2    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub station, indoor + outdoor sensor
 30.3060.01  TFA_WHB X    +3    4    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub station, indoor + 3*outdoor sensors
 30.3304.02  TFA_WHB X    X     X    6Byte          X	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub temp/humidity + cable temp sensor
+30.5043.01  TFA_WHB X    -     X    6Byte          X  	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub Cosy Radar (3h/24h/7d/24h humidity average)
 
 Notes:
 
@@ -58,6 +59,9 @@ Notes:
 
 30.3060.01 (station, "Klima@Home", uses 3* external sensor KlimaLoggPro 30.3180.IT)
 - Sends internal and three outdoor TH values
+
+30.5043.01 (station)
+- Has internal temperatur and humidity, averages humidity over 3h/24h/7d/30d
 
 -----------------------------------------------------------------------------
 

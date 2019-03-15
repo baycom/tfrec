@@ -54,6 +54,7 @@ map<uint32_t, uint32_t> crc_initvals = {
 	{ 0x0b, 0xe7720ae4}, // Wind sensor
 	{ 0x10, 0x62d0afc1}, // Door sensor
 	{ 0x11, 0x8cba0708}, // 4 Thermo-hygro-sensors (TFA 30.3060.01)
+	{ 0x12, 0x5a9e30ae}, // Humidity guard (TFA 30.5043.01)
 };
 
 // Translates time units in seconds multiplier
@@ -410,6 +411,47 @@ void whb_decoder::decode_11(uint8_t *msg, uint64_t id, int rssi, int offset)
 	}
 }
 //-------------------------------------------------------------------------
+// Humidity guard 
+void whb_decoder::decode_12(uint8_t *msg, uint64_t id, int rssi, int offset)
+{
+	uint16_t seq=BE16(msg)&0x3fff;
+	uint16_t hum[5];
+	hum[0]=msg[8]&0x7f;
+	hum[1]=msg[2]&0x7f;
+	hum[2]=msg[3]&0x7f;
+	hum[3]=msg[4]&0x7f;
+	hum[4]=msg[5]&0x7f;
+	uint16_t temp=BE16(msg+6)&0x7ff;
+
+	if (dbg>=0) {
+		printf("WHB12 %llx TEMP %g HUM %i HUM3h %i HUM24h %i HUM7d %i HUM30d %i\n",
+		       id, cvt_temp(temp), hum[0], hum[1], hum[2], hum[3], hum[4]);
+		fflush(stdout);
+	}
+	sensordata_t sd;
+        sd.type=type;
+        sd.id=(id<<4LL);
+        sd.temp=cvt_temp(temp);
+        sd.humidity=hum[0];
+        sd.sequence=seq;
+        sd.alarm=0;
+        sd.rssi=rssi;
+        sd.flags=0;
+        sd.ts=time(0);
+        store_data(sd);
+        
+        // Store average humidity as sub ids 1 c d e
+        sd.id=(id<<4LL)+1;
+        sd.temp=0;
+        sd.humidity=hum[1];
+        store_data(sd);
+        for(int n=0;n<3;n++) {
+	        sd.id=(id<<4LL)+0xc+n;
+	        sd.humidity=hum[2+n];
+	        store_data(sd);
+	}        	
+}
+//-------------------------------------------------------------------------
 void whb_decoder::flush(int rssi, int offset)
 {
 	uint32_t crc_calc=0;
@@ -473,6 +515,9 @@ void whb_decoder::flush(int rssi, int offset)
 			break;
 		case 0x11:
 			decode_11(msg, id, rssi, offset);
+			break;
+		case 0x12:
+			decode_12(msg, id, rssi, offset);
 			break;
 		}
 		goto reset;
