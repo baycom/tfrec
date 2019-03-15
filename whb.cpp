@@ -45,7 +45,7 @@
 using std::map;
 
 map<uint32_t, uint32_t> crc_initvals = {
-     // { 0x02, 0x???????? },   // Only temp
+        { 0x02, 0x97d97a26}, // Only temp
 	{ 0x03, 0xf59c5a1e}, // Temp/hum
 	{ 0x04, 0x98e1d11f}, // Temp/hum/water
 	{ 0x06, 0xa7a41254}, // Temp/hum + temp2
@@ -107,22 +107,49 @@ double whb_decoder::cvt_temp(uint16_t raw)
 		return -((raw^0x7ff)+1)/10.0;
 	else
 		return raw/10.0;
-}//-------------------------------------------------------------------------
+}
+//-------------------------------------------------------------------------
+// Temp/hum
+void whb_decoder::decode_02(uint8_t *msg,  uint64_t id, int rssi, int offset)
+{
+	uint16_t seq=BE16(msg)&0x3fff;
+	uint16_t temp=BE16(msg+2)&0x7ff;
+	uint16_t temp_prev=BE16(msg+4)&0x7ff;
+
+	if (dbg>=0) {
+		printf("WHB02 ID %llx TEMP %g, PTEMP %g\n",
+		       id, cvt_temp(temp), cvt_temp(temp_prev));
+		fflush(stdout);
+	}		
+	sensordata_t sd;
+	sd.type=type;
+	sd.id=(id<<4LL);
+	sd.temp=cvt_temp(temp);
+	sd.humidity=0;
+	sd.sequence=seq;
+	sd.alarm=0;
+	sd.rssi=rssi;
+	sd.flags=0;
+	sd.ts=time(0);
+	store_data(sd);
+}
+//-------------------------------------------------------------------------
 // Temp/hum
 void whb_decoder::decode_03(uint8_t *msg,  uint64_t id, int rssi, int offset)
 {
-	uint16_t seq=BE16(msg)&0x3fff;;
+	uint16_t seq=BE16(msg)&0x3fff;
 	uint16_t temp=BE16(msg+2)&0x7ff;
 	uint16_t hum=BE16(msg+4)&0xff;
 
-	uint16_t temp_prev=BE16(msg+6)&0x3fff;
+	uint16_t temp_prev=BE16(msg+6)&0x7ff;
 	uint16_t hum_prev=BE16(msg+8)&0xff;
 
 	uint16_t unknown=msg[10];
-	if (dbg)
-		printf("WHB/03 %llx TEMP %g HUM %i, PTEMP %g PHUM %i\n",
+	if (dbg>=0) {
+		printf("WHB03 ID %llx TEMP %g HUM %i, PTEMP %g PHUM %i\n",
 		       id, cvt_temp(temp), hum, cvt_temp(temp_prev), hum_prev);
-
+		fflush(stdout);
+	}
 	sensordata_t sd;
 	sd.type=type;
 	sd.id=(id<<4LL);
@@ -139,18 +166,20 @@ void whb_decoder::decode_03(uint8_t *msg,  uint64_t id, int rssi, int offset)
 // Temp/hum/water
 void whb_decoder::decode_04(uint8_t *msg,  uint64_t id, int rssi, int offset)
 {
-	uint16_t seq=BE16(msg)&0x3fff;;
+	uint16_t seq=BE16(msg)&0x3fff;
 	uint16_t temp=BE16(msg+2)&0x7ff;
 	uint16_t hum=BE16(msg+4)&0xff;
 	uint8_t wet=*(msg+6);
 
-	uint16_t temp_prev=BE16(msg+7)&0x3fff;
+	uint16_t temp_prev=BE16(msg+7)&0x7ff;
 	uint16_t hum_prev=BE16(msg+9)&0xff;
 	uint16_t wet_prev=*(msg+11);
 
-	if (dbg)
-		printf("WHB/04 %llx TEMP %g HUM %i WET %i, PTEMP %g PHUM %i PWET %i\n",
+	if (dbg>=0) {
+		printf("WHB04 ID %llx TEMP %g HUM %i WET %i, PTEMP %g PHUM %i PWET %i\n",
 		       id, cvt_temp(temp),hum,(wet&1)^1, cvt_temp(temp_prev), hum_prev, (wet_prev&1)^1);
+		fflush(stdout);
+	}
 	sensordata_t sd;
 	sd.type=type;
 	sd.id=(id<<4LL);
@@ -177,12 +206,14 @@ void whb_decoder::decode_06(uint8_t *msg,  uint64_t id, int rssi, int offset)
 	uint16_t temp2=BE16(msg+4)&0x7ff;
 	uint16_t hum=BE16(msg+6)&0xff;
 
-	uint16_t temp_prev=BE16(msg+8)&0x3fff;
-	uint16_t temp2_prev=BE16(msg+10)&0x3fff;
+	uint16_t temp_prev=BE16(msg+8)&0x7ff;
+	uint16_t temp2_prev=BE16(msg+10)&0x7ff;
 	uint16_t hum_prev=BE16(msg+12)&0xff;
-	if (dbg)
-		printf("WHB/06 %llx TEMP %g HUM %i TEMP2 %g, PTEMP %g PHUM %i PTEMP2 %g\n",
+	if (dbg>=0) {
+		printf("WHB06 ID %llx TEMP %g HUM %i TEMP2 %g, PTEMP %g PHUM %i PTEMP2 %g\n",
 		       id, cvt_temp(temp),hum,cvt_temp(temp2), cvt_temp(temp_prev), hum_prev, cvt_temp(temp2_prev));
+		fflush(stdout);
+	}
 	sensordata_t sd;
 	sd.type=type;
 	sd.id=(id<<4LL);
@@ -211,11 +242,12 @@ void whb_decoder::decode_07(uint8_t *msg, uint64_t id, int rssi, int offset)
 		temp[n]=BE16(msg+2+4*n)&0x07ff;
 		hum[n]=BE16(msg+4+4*n)&0x0ff; 
 	}
-	if (dbg) {
-		printf("WHB/07 %llx TEMP_IN %g HUM_IN %i TEMP_OUT %g HUM_OUT %i",id, cvt_temp(temp[0]), hum[0], cvt_temp(temp[1]), hum[1]);
+	if (dbg>=0) {
+		printf("WHB07 ID %llx TEMP_IN %g HUM_IN %i TEMP_OUT %g HUM_OUT %i",id, cvt_temp(temp[0]), hum[0], cvt_temp(temp[1]), hum[1]);
 		if (dbg>1)
 			printf(" PTEMP_IN %g PHUM_IN %i PTEMP_OUT %g PHUM_OUT %i", cvt_temp(temp[2]), hum[2], cvt_temp(temp[3]), hum[3]);
 		puts("");
+		fflush(stdout);
 	}
 
 	sensordata_t sd;
@@ -239,18 +271,21 @@ void whb_decoder::decode_07(uint8_t *msg, uint64_t id, int rssi, int offset)
 // Rain sensor, store counter and temperature
 void whb_decoder::decode_08(uint8_t *msg, uint64_t id, int rssi, int offset)
 {
-	uint16_t seq=BE16(msg)&0x3fff;;
+	uint16_t seq=BE16(msg)&0x3fff;
 	uint8_t event=msg[2]>>6;
 	uint16_t temp=BE16(msg+2)&0x07ff; // 11Bit signed, 0.1steps
 	double temp_real=cvt_temp(temp);
 	uint16_t cnt=BE16(msg+4);
 	uint32_t times[10];
-	printf("WHB/08 %llx cnt %i\n",id, cnt);
+	if (dbg>=0) {
+		printf("WHB08 ID %llx cnt %i\n",id, cnt);
+		fflush(stdout);
+	}
 	for(int i=0;i<10;i++) {
 		uint16_t x=BE16(msg+6+2*i);
 		times[i]=timeunit_tab[(x>>14)&3] * (x&0x3fff);
 		if (dbg>1)
-			printf("WHB/08 %llx #%i time %i\n",id,i,times[i]);
+			printf("WHB08 ID %llx #%i time %i\n",id,i,times[i]);
 	}
 
 	sensordata_t sd;
@@ -283,10 +318,11 @@ void whb_decoder::decode_0b(uint8_t *msg, uint64_t id, int rssi, int offset)
 		speed[i]= ((v>>16)&0xff + 256*((v>>25)&1))/10.0;
 		gust[i]=  ((v>>8)&0xff + 256*((v>>24)&1))/10.0;
 		times[i]=(v&0xff)*2;
-		if (dbg&& (i==0 || dbg>1))
-			printf("WHB/0b %llx #%i DIR %f SPEED %f GUST %f time %i\n",
+		if (dbg>=0 && (i==0 || dbg>0)) {
+			printf("WHB0b ID %llx #%i DIR %f SPEED %f GUST %f time %i\n",
 			       id, i,dir[i],speed[i],gust[i],times[i]);
-		
+			fflush(stdout);
+		}		
 	}
 	sensordata_t sd;
 	sd.type=type;
@@ -316,8 +352,10 @@ void whb_decoder::decode_10(uint8_t *msg, uint64_t id, int rssi, int offset)
 		uint16_t x=BE16(msg+2+2*i);
 		state[i]=x>>15; // 0=closed
 		times[i]=timeunit_tab[(x>>13)&3] * (x&0x1fff);
-		if (dbg&& (i==0 || dbg>1))
-			printf("WHB/10 %llx #%i %i %i\n",id,i,state[i],times[i]);
+		if (dbg>=0 && (i==0 || dbg>0)) {
+			printf("WHB10 ID %llx #%i %i %i\n",id,i,state[i],times[i]);
+			fflush(stdout);
+		}
 	}
 	sensordata_t sd;
 	sd.type=type;
@@ -343,13 +381,14 @@ void whb_decoder::decode_11(uint8_t *msg, uint64_t id, int rssi, int offset)
 		hum[n] =BE16(msg+4+4*n)&0xff;
 	}
 
-	if (dbg) {
-		printf("WHB/11 %llx TEMP1 %g HUM1 %i TEMP2 %g HUM2 %i TEMP3 %g HUM3 %i TEMP_IN %g HUM_IN %i",
+	if (dbg>=0) {
+		printf("WHB11 %llx TEMP1 %g HUM1 %i TEMP2 %g HUM2 %i TEMP3 %g HUM3 %i TEMP_IN %g HUM_IN %i",
 		       id, cvt_temp(temp[0]),hum[0], cvt_temp(temp[1]),hum[1], cvt_temp(temp[2]),hum[2], cvt_temp(temp[3]),hum[3]);
 		if (dbg>1)
 			printf(" PTEMP1 %g PHUM1 %i PTEMP2 %g PHUM2 %i PTEMP3 %g PHUM3 %i PTEMP_IN %g PHUM_IN %i",
 			       cvt_temp(temp[4]),hum[4], cvt_temp(temp[5]),hum[5], cvt_temp(temp[6]),hum[6], cvt_temp(temp[7]),hum[7]);
 		puts("");
+		fflush(stdout);
 	}
 	sensordata_t sd;
 	sd.type=type;
@@ -396,7 +435,7 @@ void whb_decoder::flush(int rssi, int offset)
 	stype=rdata[5]; // sensor type
 	
 	if (crc_initvals.find(stype)==crc_initvals.end()) {
-		if (dbg)
+		if (dbg>=0)
 			printf("WHB: Probably unsupported sensor type %02x! Please report\n",stype);
 		goto bad;
 	}
@@ -408,6 +447,9 @@ void whb_decoder::flush(int rssi, int offset)
 		uint64_t id=BE48(&rdata[5]);
 		uint8_t *msg=&rdata[4+1+6];
 		switch(stype) {
+		case 0x02:
+			decode_02(msg, id, rssi, offset);
+			break;
 		case 0x03:
 			decode_03(msg, id, rssi, offset);
 			break;

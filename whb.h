@@ -16,6 +16,7 @@ class whb_decoder: public decoder
 	void flush(int rssi,int offset=0);
  private:
 	double cvt_temp(uint16_t raw);
+	void decode_02(uint8_t *msg, uint64_t id, int rssi, int offset); // temp
 	void decode_03(uint8_t *msg, uint64_t id, int rssi, int offset); // temp/hum
 	void decode_04(uint8_t *msg, uint64_t id, int rssi, int offset); // temp/hum/water
 	void decode_06(uint8_t *msg, uint64_t id, int rssi, int offset); // temp/hum + temp (TFA 30.3304.02)

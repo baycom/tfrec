@@ -154,7 +154,7 @@ void tfa2_decoder::flush_tx22(int rssi, int offset)
 		sd.ts=time(0);
 		
 		int new_id=(type<<28)|(id<<4);
-		if (dbg) {
+		if (dbg>=0) {
 			printf("TX22 ID %x, ", new_id);
 			if (have_temp)
 				printf("temp %g, ", temp);
@@ -167,6 +167,7 @@ void tfa2_decoder::flush_tx22(int rssi, int offset)
 			if (have_gust)
 				printf("gust %g, ",  wgust);
 			printf("RSSI %i, offset %.0lfkHz\n", rssi, -1536.0*offset/131072);
+			fflush(stdout);
 		}
 		if (have_temp) {
 			sd.id=new_id;
@@ -242,11 +243,12 @@ void tfa2_decoder::flush_tfa(int rssi, int offset)
 		    ) {
 			if (hum>100)
 				hum=0;
-			
-			printf("ID %06x %+.1lf %i %02x %02x RSSI %i Offset %.0lfkHz\n",
-			       id,temp,hum,crc_val,crc_calc,rssi,
-			       -1536.0*offset/131072);
-			
+			if (dbg>=0) {
+				printf("TFA%i ID %06x %+.1lf %i%% RSSI %i Offset %.0lfkHz\n",						
+				       type+1,id,temp,hum,rssi,
+				       -1536.0*offset/131072);
+				fflush(stdout);
+			}
 			sensordata_t sd;
 			sd.type=type;
 			sd.id=id;
@@ -263,11 +265,11 @@ void tfa2_decoder::flush_tfa(int rssi, int offset)
 			bad++;
 			if (dbg) {
 				if (crc_val!=crc_calc)
-					printf("TFA2/3(%02x) BAD %i RSSI %i  Offset %.0lfkHz (CRC %02x %02x)\n",1<<type,bad,rssi,
+					printf("TFA%i BAD %i RSSI %i  Offset %.0lfkHz (CRC %02x %02x)\n",type+1,bad,rssi,
 					       -1536.0*offset/131072,
 					       crc_val,crc_calc);
 				else
-					printf("TFA2/3(%02x) BAD %i RSSI %i  Offset %.0lfkHz (SANITY)\n",1<<type,bad,rssi,-1536.0*offset/131072);
+					printf("TFA%i BAD %i RSSI %i  Offset %.0lfkHz (SANITY)\n",type+1,bad,rssi,-1536.0*offset/131072);
 			}
 		}
 	}

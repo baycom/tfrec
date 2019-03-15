@@ -300,9 +300,9 @@ currently just internally decoded but not used. You can see if with the "-DD" op
 
 There is a "secret" type specific value (CRC init) that can only be safely
 calculated with at least 2 *different* raw messages (3 are better). I have
-determined it for 8 types (03, 04, 06, 07, 08, 0b, 10, and 11) and also
+determined it for 8 types (02, 03, 04, 06, 07, 08, 0b, 10, and 11) and also
 implemented the value decoding just for these sensors. For other types
-please send me a few raw messages received by the -D option.
+please send me a few (different) raw messages received by the -D option.
 
 ## Dump save/load
 

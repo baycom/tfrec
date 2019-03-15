@@ -86,7 +86,7 @@ void tfa1_decoder::flush(int rssi, int offset)
 			}			
 			
 			if (dbg>=0){
-				printf("ID %04x %+.1f %i%%  seq %x lowbat %i RSSI %i\n",id,temp,hum,seq, batfail, rssi);
+				printf("TFA1 ID %04x %+.1f %i%% seq %x lowbat %i RSSI %i\n",id,temp,hum,seq, batfail, rssi);
 				fflush(stdout);
 			}
 			sensordata_t sd;
@@ -105,9 +105,9 @@ void tfa1_decoder::flush(int rssi, int offset)
 			bad++;
 			if (dbg) {
 				if (crc_val!=crc_calc)
-					printf("TFA1(%02x) BAD %i RSSI %i (CRC %02x %02x)\n",1<<type, bad,rssi,crc_val,crc_calc);
+					printf("TFA1 BAD %i RSSI %i (CRC %02x %02x)\n", bad,rssi,crc_val,crc_calc);
 				else
-					printf("TFA1(%02x) BAD %i RSSI %i (SANITY)\n",1<<type, bad,rssi);
+					printf("TFA1 BAD %i RSSI %i (SANITY)\n", bad,rssi);
 				fflush(stdout);
 			}
 		}
