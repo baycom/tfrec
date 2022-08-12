@@ -1,5 +1,5 @@
 ## tfrec - A SDR tool for receiving wireless sensor data
-(c) 2017-2018 Georg Acher & Deti Fliegl, {acher|fliegl}(at)baycom.de
+(c) 2017-2022 Georg Acher & Deti Fliegl, {acher|fliegl}(at)baycom.de
 
 SEO Keywords: TFA KlimaLogg LaCrosse decoder SDR WeatherHub sensor Linux :)
 
@@ -7,7 +7,7 @@ This tool uses a RTL2832-based SDR stick to decode data sent by the
 KlimaLogg Pro (and recently some other) temperature sensors made by TFA
 Dostmann (http://tfa-dostmann.de) or other Technoline/LaCrosse-compatible sensors.
 
-Runs on Linux (tested on x86 and ARM/Raspberry PI3) and MacOS. Required HW
+Runs on Linux (tested on x86 and ARM/Raspberry Zero/PI3/PI4) and MacOS. Required HW
 is a RTL2832-based DVB-T-stick, preferrably with a R820T-tuner. 
 
 Received values must be externaly fed to a database, FHEM, etc!
@@ -19,8 +19,9 @@ Supported sensors are (see sensors.txt for more details):
 - NRZ/17240baud:  30.3143.IT, 30.3144.IT, 30.3147.IT, 30.3157.IT, 30.3159.IT and probably 30.3146.IT
 - NRZ/8842baud:   Technoline TX22
 - NRZS/6000baud:  WeatherHub sensors (TFA 30.3303.02, 30.3305.02, 30.3306.02, 30.3307.02 30.3311.02, 
-                  MA10410/TFA 35.1147.01, TFA 35.1147.01, 30.3304.02, 30.5043.01 
-                  probably others like Technoline Mobile Alerts)
+                  MA10410/TFA 35.1147.01, TFA 35.1147.01, 30.3304.02, 30.5043.01
+		  Technoline Mobile Alerts:
+		  MA10100 MA10200 MA10650 MA10660)
 
 It is likely that the other LaCrosse-based sensors with 9600/17240baud also
 work:
@@ -53,9 +54,9 @@ GPLv2   http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
 ## Installation
 
-For x86/x86_64/MacOS simply type make. For RasPI3 use "make -f
-Makefile.arm", for RasPI 2 or Zero  "make -f Makefile.raspi2". For other
-architectures you need to adjust the makefile flags.
+There is now a unified makefile for some common platforms (PC, Mac, ARM), so
+typing "make" should be enough.  For unusual architectures you need to
+adjust the makefile flags to get optimum performance.
 
 The resulting executable is "tfrec". All options can be seen with "tfrec -h".
 

@@ -71,7 +71,7 @@ void tfa2_decoder::flush(int rssi, int offset)
 //-------------------------------------------------------------------------
 void tfa2_decoder::flush_tx22(int rssi, int offset)
 {
-	uint8_t crc_val,crc_calc;
+	uint8_t crc_val=0,crc_calc=0;
 	
 	if (byte_cnt>=7 && byte_cnt<64) {
 		if (dbg) {

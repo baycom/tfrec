@@ -1,5 +1,8 @@
 #include <math.h>
 #include <map>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 
 #include "whb.h"
 #include "dsp_stuff.h"
@@ -118,7 +121,7 @@ void whb_decoder::decode_02(uint8_t *msg,  uint64_t id, int rssi, int offset)
 	uint16_t temp_prev=BE16(msg+4)&0x7ff;
 
 	if (dbg>=0) {
-		printf("WHB02 ID %llx TEMP %g, PTEMP %g\n",
+		printf("WHB02 ID %" PRIx64 " TEMP %g, PTEMP %g\n",
 		       id, cvt_temp(temp), cvt_temp(temp_prev));
 		fflush(stdout);
 	}		
@@ -147,7 +150,7 @@ void whb_decoder::decode_03(uint8_t *msg,  uint64_t id, int rssi, int offset)
 
 	uint16_t unknown=msg[10];
 	if (dbg>=0) {
-		printf("WHB03 ID %llx TEMP %g HUM %i, PTEMP %g PHUM %i\n",
+		printf("WHB03 ID %" PRIx64 " TEMP %g HUM %i, PTEMP %g PHUM %i\n",
 		       id, cvt_temp(temp), hum, cvt_temp(temp_prev), hum_prev);
 		fflush(stdout);
 	}
@@ -177,7 +180,7 @@ void whb_decoder::decode_04(uint8_t *msg,  uint64_t id, int rssi, int offset)
 	uint16_t wet_prev=*(msg+11);
 
 	if (dbg>=0) {
-		printf("WHB04 ID %llx TEMP %g HUM %i WET %i, PTEMP %g PHUM %i PWET %i\n",
+		printf("WHB04 ID %" PRIx64 " TEMP %g HUM %i WET %i, PTEMP %g PHUM %i PWET %i\n",
 		       id, cvt_temp(temp),hum,(wet&1)^1, cvt_temp(temp_prev), hum_prev, (wet_prev&1)^1);
 		fflush(stdout);
 	}
@@ -211,7 +214,7 @@ void whb_decoder::decode_06(uint8_t *msg,  uint64_t id, int rssi, int offset)
 	uint16_t temp2_prev=BE16(msg+10)&0x7ff;
 	uint16_t hum_prev=BE16(msg+12)&0xff;
 	if (dbg>=0) {
-		printf("WHB06 ID %llx TEMP %g HUM %i TEMP2 %g, PTEMP %g PHUM %i PTEMP2 %g\n",
+		printf("WHB06 ID %" PRIx64 "TEMP %g HUM %i TEMP2 %g, PTEMP %g PHUM %i PTEMP2 %g\n",
 		       id, cvt_temp(temp),hum,cvt_temp(temp2), cvt_temp(temp_prev), hum_prev, cvt_temp(temp2_prev));
 		fflush(stdout);
 	}
@@ -244,7 +247,7 @@ void whb_decoder::decode_07(uint8_t *msg, uint64_t id, int rssi, int offset)
 		hum[n]=BE16(msg+4+4*n)&0x0ff; 
 	}
 	if (dbg>=0) {
-		printf("WHB07 ID %llx TEMP_IN %g HUM_IN %i TEMP_OUT %g HUM_OUT %i",id, cvt_temp(temp[0]), hum[0], cvt_temp(temp[1]), hum[1]);
+		printf("WHB07 ID %" PRIx64 " TEMP_IN %g HUM_IN %i TEMP_OUT %g HUM_OUT %i",id, cvt_temp(temp[0]), hum[0], cvt_temp(temp[1]), hum[1]);
 		if (dbg>1)
 			printf(" PTEMP_IN %g PHUM_IN %i PTEMP_OUT %g PHUM_OUT %i", cvt_temp(temp[2]), hum[2], cvt_temp(temp[3]), hum[3]);
 		puts("");
@@ -279,14 +282,14 @@ void whb_decoder::decode_08(uint8_t *msg, uint64_t id, int rssi, int offset)
 	uint16_t cnt=BE16(msg+4);
 	uint32_t times[10];
 	if (dbg>=0) {
-		printf("WHB08 ID %llx cnt %i\n",id, cnt);
+		printf("WHB08 ID %" PRIx64 " cnt %i\n",id, cnt);
 		fflush(stdout);
 	}
 	for(int i=0;i<10;i++) {
 		uint16_t x=BE16(msg+6+2*i);
 		times[i]=timeunit_tab[(x>>14)&3] * (x&0x3fff);
 		if (dbg>1)
-			printf("WHB08 ID %llx #%i time %i\n",id,i,times[i]);
+			printf("WHB08 ID %" PRIx64 " #%i time %i\n",id,i,times[i]);
 	}
 
 	sensordata_t sd;
@@ -316,11 +319,11 @@ void whb_decoder::decode_0b(uint8_t *msg, uint64_t id, int rssi, int offset)
 	for(int i=0;i<6;i++) {
 		uint32_t v=BE32(msg+3+4*i);
 		dir[i]=22.5*(v>>28); // 0: N 90:E 180:S
-		speed[i]= ((v>>16)&0xff + 256*((v>>25)&1))/10.0;
-		gust[i]=  ((v>>8)&0xff + 256*((v>>24)&1))/10.0;
+		speed[i]= (((v>>16)&0xff) + 256*((v>>25)&1))/10.0;
+		gust[i]=  (((v>>8)&0xff) + 256*((v>>24)&1))/10.0;
 		times[i]=(v&0xff)*2;
 		if (dbg>=0 && (i==0 || dbg>0)) {
-			printf("WHB0b ID %llx #%i DIR %f SPEED %f GUST %f time %i\n",
+			printf("WHB0b ID %" PRIx64 " #%i DIR %f SPEED %f GUST %f time %i\n",
 			       id, i,dir[i],speed[i],gust[i],times[i]);
 			fflush(stdout);
 		}		
@@ -354,7 +357,7 @@ void whb_decoder::decode_10(uint8_t *msg, uint64_t id, int rssi, int offset)
 		state[i]=x>>15; // 0=closed
 		times[i]=timeunit_tab[(x>>13)&3] * (x&0x1fff);
 		if (dbg>=0 && (i==0 || dbg>0)) {
-			printf("WHB10 ID %llx #%i %i %i\n",id,i,state[i],times[i]);
+			printf("WHB10 ID %" PRIx64 " #%i %i %i\n",id,i,state[i],times[i]);
 			fflush(stdout);
 		}
 	}
@@ -383,7 +386,7 @@ void whb_decoder::decode_11(uint8_t *msg, uint64_t id, int rssi, int offset)
 	}
 
 	if (dbg>=0) {
-		printf("WHB11 %llx TEMP1 %g HUM1 %i TEMP2 %g HUM2 %i TEMP3 %g HUM3 %i TEMP_IN %g HUM_IN %i",
+		printf("WHB11 %" PRIx64 " TEMP1 %g HUM1 %i TEMP2 %g HUM2 %i TEMP3 %g HUM3 %i TEMP_IN %g HUM_IN %i",
 		       id, cvt_temp(temp[0]),hum[0], cvt_temp(temp[1]),hum[1], cvt_temp(temp[2]),hum[2], cvt_temp(temp[3]),hum[3]);
 		if (dbg>1)
 			printf(" PTEMP1 %g PHUM1 %i PTEMP2 %g PHUM2 %i PTEMP3 %g PHUM3 %i PTEMP_IN %g PHUM_IN %i",
@@ -424,7 +427,7 @@ void whb_decoder::decode_12(uint8_t *msg, uint64_t id, int rssi, int offset)
 	uint16_t temp=BE16(msg+6)&0x7ff;
 
 	if (dbg>=0) {
-		printf("WHB12 %llx TEMP %g HUM %i HUM3h %i HUM24h %i HUM7d %i HUM30d %i\n",
+		printf("WHB12 %" PRIx64 " TEMP %g HUM %i HUM3h %i HUM24h %i HUM7d %i HUM30d %i\n",
 		       id, cvt_temp(temp), hum[0], hum[1], hum[2], hum[3], hum[4]);
 		fflush(stdout);
 	}

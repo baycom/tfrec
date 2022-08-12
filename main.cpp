@@ -35,14 +35,14 @@ void read_raw_msgs(vector<demodulator*> *demods, char *test_file)
 			continue;
 		unsigned char dbuf[512];
 		// convertdump line to binary
-		int len=0;
+		unsigned int len=0;
 		char *dp=buf;
 		char *x;
 		while((x=strsep(&dp, " ")) && len<sizeof(dbuf)) {
 			if (*x!=0)
 				dbuf[len++]=strtol(x, NULL, 16);
 		}
-		for(int n=0;n<demods->size();n++) {			
+		for(auto n=0u;n<demods->size();n++) {			
 			demods->at(n)->dec->store_bytes(dbuf, len);
 			demods->at(n)->dec->flush(0);
 			puts("");
@@ -229,7 +229,7 @@ int main(int argc, char **argv)
 	e.run(timeout);
 
 	if (mode) {
-		for(int n=0;n<demods.size();n++)
+		for(auto n=0u;n<demods.size();n++)
 			demods.at(n)->dec->flush_storage();
 	}
 }

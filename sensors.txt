@@ -26,8 +26,8 @@ X) Probably never supported
 30.3303.02  TFA_WHB X    -     X    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  420s?    ?	     WeatherHub temp/humidity sensor
 30.3305.02  TFA_WHB X    -     X    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  420s+  P58-r19    WeatherHub temp/humidity/wetness sensor
 30.3306.02X TFA_WHP -	 -     -    none   	   -	~4000	FM-NRZ	 (ea 44)   -        -	     WeatherHub rain sensor, simple mode
-30.3306.02  TFA_WHB X	 -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  7200s+   -	     WeatherHub rain sensor
-30.3307.02  TFA_WHB -	 -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  420s     -	     WeatherHub wind sensor
+30.3306.02  TFA_WHB X	 -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  7200s+   -	     WeatherHub rain sensor (= MA10650)
+30.3307.02  TFA_WHB -	 -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  420s     -	     WeatherHub wind sensor (= MA10660)
 30.3311.02  TFA_WHB -    -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  21600s+  -	     WeatherHub door sensor
 35.1147.01  TFA_WHB X    X     2    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub station, indoor + outdoor sensor
 30.3060.01  TFA_WHB X    +3    4    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub station, indoor + 3*outdoor sensors

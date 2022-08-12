@@ -35,7 +35,7 @@ void fsk_demod::process(int16_t *data_iq, int len)
 {
 	int triggered=0;
 	runs++;
-	for(int n=0;n<demods->size();n++) {
+	for(auto n=0u;n<demods->size();n++) {
 		demods->at(n)->start(len);
 	}
 	
@@ -45,7 +45,7 @@ void fsk_demod::process(int16_t *data_iq, int len)
 		int pwr=abs(data_iq[i])+abs(data_iq[i+1]);
 		int t=0;
 		
-		for(int n=0;n<demods->size();n++)
+		for(auto n=0u;n<demods->size();n++)
 			t+=demods->at(n)->demod(thresh, pwr, i, data_iq+i);
 
 		if (t)

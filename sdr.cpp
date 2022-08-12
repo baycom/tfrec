@@ -77,7 +77,7 @@ int sdr::search_device(char *substr)
 {
 	int i, device_count, device, offset;
         char *s2;
-        char vendor[256], product[256], serial[256],sum[768];
+        char vendor[256], product[256], serial[256],sum[1024];
         device_count = rtlsdr_get_device_count();
         if (!device_count) {
                 printf("No supported devices found.\n");
