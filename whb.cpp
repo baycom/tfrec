@@ -54,6 +54,7 @@ map<uint32_t, uint32_t> crc_initvals = {
 	{ 0x06, 0xa7a41254}, // Temp/hum + temp2
 	{ 0x07, 0x3303fb1d}, // Station MA10410 (TFA 35.1147.01)
 	{ 0x08, 0x29f0f49b}, // Rain sensor (+ temp)
+	{ 0x09, 0xa7a41254}, // Temp/hum + temp2 (TFA 30.3302.02), extended temperature range
 	{ 0x0b, 0xe7720ae4}, // Wind sensor
 	{ 0x10, 0x62d0afc1}, // Door sensor
 	{ 0x11, 0x8cba0708}, // 4 Thermo-hygro-sensors (TFA 30.3060.01)
@@ -105,12 +106,20 @@ whb_decoder::whb_decoder(sensor_e _type) : decoder(_type)
 	nrzs=0;
 }
 //-------------------------------------------------------------------------
-double whb_decoder::cvt_temp(uint16_t raw)
+double whb_decoder::cvt_temp(uint16_t raw, int extended)
 {
-	if (raw&0x400)
-		return -((raw^0x7ff)+1)/10.0;
-	else
-		return raw/10.0;
+	if (extended==1) {
+		// extened range, bit 11 is actually the sign bit (range -204.7 to 204.7)
+		if (raw&0x800)
+			return -((raw^0xfff)+1)/10.0;
+		else
+			return raw/10.0;
+	} else {
+		if (raw&0x400)
+			return -((raw^0x7ff)+1)/10.0;
+		else
+			return raw/10.0;
+	}
 }
 //-------------------------------------------------------------------------
 // Temp/hum
@@ -203,19 +212,29 @@ void whb_decoder::decode_04(uint8_t *msg,  uint64_t id, int rssi, int offset)
 }
 //-------------------------------------------------------------------------
 // Temp/hum + temp2
-void whb_decoder::decode_06(uint8_t *msg,  uint64_t id, int rssi, int offset)
+// decodes also version 9 with extended temperature range
+void whb_decoder::decode_06_09(uint8_t *msg,  uint64_t id, int rssi, int offset, int extended)
 {
 	uint16_t seq=BE16(msg)&0x3fff;;
 	uint16_t temp=BE16(msg+2)&0x7ff;
-	uint16_t temp2=BE16(msg+4)&0x7ff;
+	uint16_t temp2, temp2_prev;
+	int whb_type=6;
+	if (extended==1) {
+		temp2=BE16(msg+4)&0xfff;
+		temp2_prev=BE16(msg+10)&0xfff;
+		whb_type=9;
+		
+	} else {
+		temp2=BE16(msg+4)&0x7ff;
+		temp2_prev=BE16(msg+10)&0x7ff;
+	}
 	uint16_t hum=BE16(msg+6)&0xff;
-
 	uint16_t temp_prev=BE16(msg+8)&0x7ff;
-	uint16_t temp2_prev=BE16(msg+10)&0x7ff;
 	uint16_t hum_prev=BE16(msg+12)&0xff;
+	
 	if (dbg>=0) {
-		printf("WHB06 ID %" PRIx64 "TEMP %g HUM %i TEMP2 %g, PTEMP %g PHUM %i PTEMP2 %g\n",
-		       id, cvt_temp(temp),hum,cvt_temp(temp2), cvt_temp(temp_prev), hum_prev, cvt_temp(temp2_prev));
+		printf("WHB0%i ID %" PRIx64 "TEMP %g HUM %i TEMP2 %g, PTEMP %g PHUM %i PTEMP2 %g\n",
+		       whb_type, id, cvt_temp(temp),hum,cvt_temp(temp2,extended), cvt_temp(temp_prev), hum_prev, cvt_temp(temp2_prev,extended));
 		fflush(stdout);
 	}
 	sensordata_t sd;
@@ -231,7 +250,7 @@ void whb_decoder::decode_06(uint8_t *msg,  uint64_t id, int rssi, int offset)
 	store_data(sd);
 
 	sd.id=(id<<4LL)|1;
-	sd.temp=cvt_temp(temp2);
+	sd.temp=cvt_temp(temp2, extended);
 	sd.humidity=0;
 	store_data(sd);
 }
@@ -502,13 +521,16 @@ void whb_decoder::flush(int rssi, int offset)
 			decode_04(msg, id, rssi, offset);
 			break;
 		case 0x06:
-			decode_06(msg, id, rssi, offset);
+			decode_06_09(msg, id, rssi, offset);
 			break;
 		case 0x07:
 			decode_07(msg, id, rssi, offset);
 			break;
 		case 0x08:
 			decode_08(msg, id, rssi, offset);
+			break;
+		case 0x09:
+			decode_06_09(msg, id, rssi, offset, 1);
 			break;
 		case 0x0b:
 			decode_0b(msg, id, rssi, offset);

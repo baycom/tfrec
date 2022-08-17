@@ -19,7 +19,7 @@ Supported sensors are (see sensors.txt for more details):
 - NRZ/17240baud:  30.3143.IT, 30.3144.IT, 30.3147.IT, 30.3157.IT, 30.3159.IT and probably 30.3146.IT
 - NRZ/8842baud:   Technoline TX22
 - NRZS/6000baud:  WeatherHub sensors (TFA 30.3303.02, 30.3305.02, 30.3306.02, 30.3307.02 30.3311.02, 
-                  MA10410/TFA 35.1147.01, TFA 35.1147.01, 30.3304.02, 30.5043.01
+                  MA10410/TFA 35.1147.01, TFA 35.1147.01, 30.3302.02, [B30.3304.02, 30.5043.01
 		  Technoline Mobile Alerts:
 		  MA10100 MA10200 MA10650 MA10660)
 

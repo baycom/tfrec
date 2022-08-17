@@ -31,8 +31,11 @@ X) Probably never supported
 30.3311.02  TFA_WHB -    -     -    6Byte   	   -	6000	PSK-NRZM 4b2dd42b  21600s+  -	     WeatherHub door sensor
 35.1147.01  TFA_WHB X    X     2    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub station, indoor + outdoor sensor
 30.3060.01  TFA_WHB X    +3    4    6Byte   	   X	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub station, indoor + 3*outdoor sensors
+30.3302.02  TFA_WHB X    X     X    6Byte 	   X    6000    PSK-NRZM 4b2dd42b  120      -        WeatherHub temp/humidity + cable temp sensor (extended range -50...+110C)
 30.3304.02  TFA_WHB X    X     X    6Byte          X	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub temp/humidity + cable temp sensor
 30.5043.01  TFA_WHB X    -     X    6Byte          X  	6000	PSK-NRZM 4b2dd42b  ?        -	     WeatherHub Cosy Radar (3h/24h/7d/24h humidity average)
+
+
 
 Notes:
 

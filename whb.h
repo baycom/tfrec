@@ -15,11 +15,11 @@ class whb_decoder: public decoder
 	void store_bit(int bit);
 	void flush(int rssi,int offset=0);
  private:
-	double cvt_temp(uint16_t raw);
+	double cvt_temp(uint16_t raw, int extended=0);
 	void decode_02(uint8_t *msg, uint64_t id, int rssi, int offset); // temp
 	void decode_03(uint8_t *msg, uint64_t id, int rssi, int offset); // temp/hum
 	void decode_04(uint8_t *msg, uint64_t id, int rssi, int offset); // temp/hum/water
-	void decode_06(uint8_t *msg, uint64_t id, int rssi, int offset); // temp/hum + temp (TFA 30.3304.02)
+	void decode_06_09(uint8_t *msg, uint64_t id, int rssi, int offset, int extended=0); // temp/hum + temp (TFA 30.3304.02, extended range 30.3302.02)
 	void decode_07(uint8_t *msg, uint64_t id, int rssi, int offset); // Station MA10410 (TFA 35.1147.01)
 	void decode_08(uint8_t *msg, uint64_t id, int rssi, int offset); // rain
 	void decode_0b(uint8_t *msg, uint64_t id, int rssi, int offset); // wind
