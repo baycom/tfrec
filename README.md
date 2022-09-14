@@ -141,7 +141,7 @@ printed. If you want to store the data, you can use the option -e
 &lt;cmd&gt;. For
 every received message &lt;cmd&gt; is called with the arguments
 
-	id temp hum seq batfail rssi timestamp
+	id temp hum seq batfail rssi flags timestamp
 
 The timestamp is the typical Unix timestamp of the reception time.
 
