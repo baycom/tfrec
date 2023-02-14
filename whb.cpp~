@@ -59,7 +59,6 @@ map<uint32_t, uint32_t> crc_initvals = {
 	{ 0x10, 0x62d0afc1}, // Door sensor
 	{ 0x11, 0x8cba0708}, // 4 Thermo-hygro-sensors (TFA 30.3060.01)
 	{ 0x12, 0x5a9e30ae}, // Humidity guard (TFA 30.5043.01)
-	{ 0x18, 0xca0abb08}, // Air pressure sensor
 };
 
 // Translates time units in seconds multiplier
@@ -95,6 +94,8 @@ whb_decoder::whb_decoder(sensor_e _type) : decoder(_type)
 			msg[2]=i>>8;
 			msg[3]=i;
 			uint32_t crc_calc=crc->calc(msg, 4, 0);
+			if (crc_calc== 0x83f50b46)
+				printf("%x\n",i);
 		}
 		exit(0);
 	}
@@ -265,10 +266,9 @@ void whb_decoder::decode_07(uint8_t *msg, uint64_t id, int rssi, int offset)
 		hum[n]=BE16(msg+4+4*n)&0x0ff; 
 	}
 	if (dbg>=0) {
-		printf("WHB07 ID %012" PRIX64 " TEMP_IN %.1f HUM_IN %i TEMP_OUT %.1f HUM_OUT %i BAT %d",
-		       id, cvt_temp(temp[0]), hum[0], cvt_temp(temp[1]), hum[1], seq&0x4000);
+		printf("WHB07 ID %" PRIx64 " TEMP_IN %g HUM_IN %i TEMP_OUT %g HUM_OUT %i",id, cvt_temp(temp[0]), hum[0], cvt_temp(temp[1]), hum[1]);
 		if (dbg>1)
-		  printf(" PTEMP_IN %.1f PHUM_IN %i PTEMP_OUT %.1f PHUM_OUT %i", cvt_temp(temp[2]), hum[2], cvt_temp(temp[3]), hum[3]);
+			printf(" PTEMP_IN %g PHUM_IN %i PTEMP_OUT %g PHUM_OUT %i", cvt_temp(temp[2]), hum[2], cvt_temp(temp[3]), hum[3]);
 		puts("");
 		fflush(stdout);
 	}
@@ -473,49 +473,6 @@ void whb_decoder::decode_12(uint8_t *msg, uint64_t id, int rssi, int offset)
 	        store_data(sd);
 	}        	
 }
-
-
-//-------------------------------------------------------------------------
-// Temp/hum/air pressure
-
-void whb_decoder::decode_18(uint8_t *msg,  uint64_t id, int rssi, int offset)
-{
-	uint32_t seq  = BE32(msg)&0x0fffff;
-	uint16_t temp = BE16(msg+3)&0x7ff;
-	uint16_t hum  = msg[5]&0xff;
-	uint16_t bp   = BE16(msg+6)&0xffff;
-
-	uint16_t ptemp = BE16(msg+8)&0x7ff;
-	uint16_t phum  = msg[10]&0xff;
-	uint16_t pbp   = BE16(msg+11)&0xffff;
-	
-	if (dbg>=0) {
-		printf("WHB18 ID %012" PRIX64 " TEMP %.1f HUM %i, BP %.1f BAT %d",
-		       id, cvt_temp(temp), hum, cvt_temp(bp), seq&0x400000);
-		if (dbg>1)
-		  printf(" PTEMP %.1f PHUM %i, PBP %.1f", cvt_temp(ptemp), phum, cvt_temp(pbp));
-		puts("");
-		fflush(stdout);
-	}
-	
-	sensordata_t sd = {};
-	//printf("pressure: %f %f\n", sd.pressure, sd.temp);
-	sd.type=type;
-	sd.id=(id<<4LL);
-	sd.temp=cvt_temp(temp);
-	sd.humidity=hum;
-	sd.pressure=cvt_temp(bp);
-	sd.sequence=seq;
-	sd.alarm=0;
-	sd.rssi=rssi;
-	sd.flags=0;
-	sd.ts=time(0);
-	store_data(sd);
-	sd.pressure=-9999.9;
-	store_data(sd);
-}
-
-
 //-------------------------------------------------------------------------
 void whb_decoder::flush(int rssi, int offset)
 {
@@ -528,11 +485,11 @@ void whb_decoder::flush(int rssi, int offset)
 		goto reset;
 	
 	// FIXME: byte count usually 2-3 bytes longer than real payload
-	if (dbg > -1 && byte_cnt) {	  
-	  printf("#%03i %u L=%i  ", snum++,(uint32_t)time(0), byte_cnt);
-	  for(int n=0;n<byte_cnt;n++)
-	    printf("%02x ",rdata[n]);
-	  printf(" RSSI %i ",rssi);
+	if (dbg && byte_cnt) {
+		printf("#%03i %u L=%i  ",snum++,(uint32_t)time(0), byte_cnt);
+		for(int n=0;n<byte_cnt;n++)
+			printf("%02x ",rdata[n]);
+		printf(" RSSI %i ",rssi);
 	}
 	plen=rdata[4]; // payload length
 
@@ -586,9 +543,6 @@ void whb_decoder::flush(int rssi, int offset)
 			break;
 		case 0x12:
 			decode_12(msg, id, rssi, offset);
-			break;
-		case 0x18:
-			decode_18(msg, id, rssi, offset);
 			break;
 		}
 		goto reset;
