@@ -24,7 +24,7 @@ void decoder::set_params(char *_handler, int _mode, int _dbg)
 {
 	handler=_handler;
 	mode=_mode;
-        dbg=_dbg;	
+        dbg=_dbg;
 }
 //-------------------------------------------------------------------------
 void decoder::store_bit(int bit)
@@ -71,7 +71,7 @@ void decoder::execute_handler(sensordata_t &d)
 		uint64_t nid;
 		if (type!=TFA_WHB) {
 			nid=d.id|(d.type<<24);
-			//                                        t     h  s  a  r  f ts
+			//                                        t     h  s  a  r  f  ts
 			snprintf(cmd,sizeof(cmd),"%s %04" PRIx64 " %+.1f %g %i %i %i %i %li",
 				 handler,
 				 nid, d.temp, d.humidity,
@@ -81,10 +81,10 @@ void decoder::execute_handler(sensordata_t &d)
 		}
 		else { // WHB has really long IDs...
 			nid=d.id;
-			//                                     t   h  s  a  r  f ts
-			snprintf(cmd,sizeof(cmd),"%s %013" PRIx64 " %+.1f %g %i %i %i %i %li",
+			//                                         t     h  p    s  a  r  f  ts
+			snprintf(cmd,sizeof(cmd),"%s %013" PRIx64 " %+.1f %g %.1f %i %i %i %i %li",
 				 handler,
-				 nid, d.temp, d.humidity,
+				 nid, d.temp, d.humidity, d.pressure,
 				 d.sequence, d.alarm, d.rssi,
 				 d.flags,
 				 d.ts);

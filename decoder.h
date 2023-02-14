@@ -23,6 +23,7 @@ typedef struct {
 	uint64_t id;
 	double temp;
         double humidity;
+        double pressure;
 	int alarm;
 	int flags;
 	int sequence;	
