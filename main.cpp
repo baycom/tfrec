@@ -112,7 +112,8 @@ int main(int argc, char **argv)
 		switch (c) {
 		case 'd':
 			deviceindex=strtol(optarg,NULL,10);
-			if (errno==EINVAL || errno==ERANGE) {
+			if (errno==EINVAL || errno==ERANGE ||
+			   strlen(optarg) > 4 || !strcmp(optarg,"?")) {  // Serialnumber
 				deviceindex=sdr::search_device(optarg);
 			}
 			break;
